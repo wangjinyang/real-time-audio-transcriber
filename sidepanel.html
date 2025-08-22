@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Audio Transcriber</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <!-- Main header section with title, status indicator, and settings button -->
+    <div class="header">
+      <div class="header-content">
+        <h1>AI Audio Transcriber</h1>
+        <!-- Dynamic status display showing current recording state -->
+        <div id="status" class="status-idle">Status: Idle</div>
+      </div>
+      <!-- Settings panel toggle button -->
+      <button id="settingsBtn" class="settings-toggle" title="Settings">
+        <img src="icons/settings-48.png" alt="Settings" width="16" height="16" />
+      </button>
+    </div>
+
+    <!-- Overlay settings panel (hidden by default) -->
+    <div id="settingsPanel" class="settings-panel">
+      <div class="settings-header">
+        <h3>Settings</h3>
+        <!-- Close settings panel button -->
+        <button id="closeSettings" class="close-btn">×</button>
+      </div>
+
+      <!-- API Provider Selection and Configuration section -->
+      <div class="settings-section">
+        <h4>Transcription API</h4>
+
+        <!-- API Provider Selection Dropdown -->
+        <label for="apiProvider">Provider</label>
+        <select id="apiProvider" class="api-provider-select">
+          <option value="gemini">Google Gemini 2.5 Flash</option>
+          <option value="openai">OpenAI Whisper</option>
+          <option value="deepgram">Deepgram</option>
+          <option value="fireworks">Fireworks AI</option>
+        </select>
+
+        <!-- Dynamic API Configuration Container -->
+        <div id="apiConfigContainer">
+          <!-- Google Gemini Configuration -->
+          <div id="geminiConfig" class="api-config">
+            <label for="geminiApiKey">Google Gemini API Key</label>
+            <div class="api-key-row">
+              <input type="password" id="geminiApiKey" placeholder="Enter Gemini API key" />
+              <button id="saveGeminiKeyBtn" class="secondary">Save</button>
+            </div>
+            <p class="api-description">
+              Free tier available with good accuracy. Get your key from
+              <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>
+            </p>
+          </div>
+
+          <!-- OpenAI Configuration -->
+          <div id="openaiConfig" class="api-config" style="display: none">
+            <label for="openaiApiKey">OpenAI API Key</label>
+            <div class="api-key-row">
+              <input type="password" id="openaiApiKey" placeholder="Enter OpenAI API key" />
+              <button id="saveOpenaiKeyBtn" class="secondary">Save</button>
+            </div>
+            <p class="api-description">
+              High accuracy with pay-per-use pricing. Get your key from
+              <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>
+            </p>
+          </div>
+
+          <!-- Deepgram Configuration -->
+          <div id="deepgramConfig" class="api-config" style="display: none">
+            <label for="deepgramApiKey">Deepgram API Key</label>
+            <div class="api-key-row">
+              <input type="password" id="deepgramApiKey" placeholder="Enter Deepgram API key" />
+              <button id="saveDeepgramKeyBtn" class="secondary">Save</button>
+            </div>
+            <p class="api-description">
+              Real-time speech recognition. Get your key from
+              <a href="https://console.deepgram.com/" target="_blank">Deepgram Console</a>
+            </p>
+          </div>
+
+          <!-- Fireworks Configuration -->
+          <div id="fireworksConfig" class="api-config" style="display: none">
+            <label for="fireworksApiKey">Fireworks API Key</label>
+            <div class="api-key-row">
+              <input type="password" id="fireworksApiKey" placeholder="Enter Fireworks API key" />
+              <button id="saveFireworksKeyBtn" class="secondary">Save</button>
+            </div>
+            <p class="api-description">
+              Fast and cost-effective AI inference. Get your key from
+              <a href="https://fireworks.ai/" target="_blank">Fireworks AI</a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audio source configuration section -->
+      <div class="settings-section">
+        <h4>Audio Sources</h4>
+        <label class="mic-toggle">
+          <!-- Optional microphone input toggle -->
+          <input type="checkbox" id="useMic" />
+          Include Microphone
+        </label>
+      </div>
+
+      <!-- Reset functionality section -->
+      <div class="settings-section">
+        <!-- Reset all data button -->
+        <button id="resetBtn" class="reset-btn">Reset</button>
+        <!-- Explanatory text for reset functionality -->
+        <p class="reset-description">Clear all data including API key and transcription history</p>
+      </div>
+    </div>
+
+    <!-- Audible tabs detection and selection section -->
+    <div class="tabs-picker">
+      <div class="tabs-header">
+        <span>Audible Tabs</span>
+        <!-- Auto-detection status indicator -->
+        <div class="auto-detect-indicator">
+          <span class="dot"></span>
+          Auto-detecting
+        </div>
+      </div>
+      <!-- Dynamic list of detected audible tabs -->
+      <div id="tabsList" class="tabs-list">
+        <div class="placeholder">Play a YouTube video to detect audio automatically</div>
+      </div>
+    </div>
+
+    <!-- Recording controls section -->
+    <div class="controls">
+      <div class="btns">
+        <!-- Main toggle button for start/stop recording -->
+        <button id="toggleBtn">Start</button>
+      </div>
+      <div class="timer-row">
+        <!-- Recording session timer display -->
+        <div id="timer" class="timer">00:00:00</div>
+      </div>
+    </div>
+
+    <!-- Transcription display and export controls -->
+    <div class="transcription-wrapper">
+      <!-- Export and management buttons (shown on hover when content exists) -->
+      <div class="transcription-controls">
+        <button id="copyBtn">Copy</button>
+        <button id="downloadTxtBtn">Download</button>
+        <button id="clearBtn">Clear</button>
+      </div>
+      <!-- Main transcription content area -->
+      <div id="transcription-display" class="transcription-container">
+        <!-- Loading animation (hidden by default, shown during processing) -->
+        <div id="loadingAnimation" class="loading-animation" style="display: none">
+          <div class="loading-dots">
+            <!-- Animated dots for loading feedback -->
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+        <!-- Default placeholder text -->
+        <p class="placeholder">Your transcription will appear here…</p>
+      </div>
+    </div>
+
+    <!-- Main application logic -->
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

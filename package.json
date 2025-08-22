@@ -1,0 +1,39 @@
+{
+  "name": "ai-audio-transcriber",
+  "version": "1.0.0",
+  "description": "AI-powered Chrome extension for real-time audio transcription from browser tabs and microphone using Google Gemini API",
+  "main": "service-worker.js",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "pre-commit": "lint-staged"
+  },
+  "keywords": [
+    "chrome-extension",
+    "audio-transcription",
+    "ai-transcription",
+    "gemini-api",
+    "real-time-transcription",
+    "speech-to-text",
+    "accessibility",
+    "productivity"
+  ],
+  "author": "",
+  "license": "MIT",
+  "lint-staged": {
+    "*.{js,json,md,html,css}": [
+      "prettier --write"
+    ],
+    "*.js": [
+      "eslint --fix"
+    ]
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.5",
+    "prettier": "^3.6.2"
+  }
+}
