@@ -1,8 +1,25 @@
 # AI Audio Transcriber Chrome Extension
 
-A powerful AI-powered Chrome extension that captures real-time audio from browser tabs and provides instant transcription using multiple AI providers. Perfect for transcribing meetings, videos, podcasts, and any audio content playing in your browser.
+A powerful AI-powered Chrome extension that captures real-time audio from browser tabs and provides instant transcription using multiple AI providers. Perfect for t### Technical Details
 
-## 🌟 Features
+### Architecture
+
+- **Manifest V3**: Modern Chrome extension format
+- **Functional Programming**: Pure functions and immutable data structures
+- **ES6+ Modules**: Clean, maintainable JavaScript with modern syntax
+- **Service Worker**: Background audio processing
+- **Web Audio API**: Real-time audio playback during transcription
+- **Chrome APIs**: Tab capture, storage, and sidepanel integration
+
+### Build System
+
+- **Webpack**: Module bundling and optimization
+- **Terser**: Advanced JavaScript minification (55% compression)
+- **Babel**: ES6+ transpilation for Chrome 88+ compatibility
+- **GitHub Actions**: Automated build and release workflows
+- **Automated Packaging**: Creates optimized zip files for distributionng meetings, videos, podcasts, and any audio content playing in your browser.
+
+## Features
 
 ### Core Functionality
 
@@ -28,7 +45,7 @@ A powerful AI-powered Chrome extension that captures real-time audio from browse
 - **Performance Optimized**: Minimal CPU usage and memory management
 - **Channel Labeling**: Distinguish between tab audio and microphone input
 
-## 📋 Prerequisites
+## Prerequisites
 
 - **Google Chrome**: Version 88 or higher
 - **API Key**: Choose from supported providers:
@@ -37,15 +54,15 @@ A powerful AI-powered Chrome extension that captures real-time audio from browse
   - [Deepgram API](https://console.deepgram.com/) (Real-time focus)
   - [Fireworks AI API](https://fireworks.ai/) (Fast and cost-effective)
 
-## 🚀 Installation
+## Installation
 
 ### Option 1: From Source (Recommended for Development)
 
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/your-username/ai-audio-transcriber.git
-   cd ai-audio-transcriber
+   git clone https://github.com/your-username/real-time-audio-transcriber.git
+   cd real-time-audio-transcriber
    ```
 
 2. **Load the extension in Chrome**
@@ -62,11 +79,11 @@ A powerful AI-powered Chrome extension that captures real-time audio from browse
 
 ### Option 2: From Release Package
 
-1. Download the latest release `.zip` file from [Releases](https://github.com/your-username/ai-audio-transcriber/releases)
+1. Download the latest release `.zip` file from [Releases](https://github.com/your-username/real-time-audio-transcriber/releases)
 2. Extract the zip file
 3. Follow steps 2-3 from Option 1
 
-## 🔧 Setup & Configuration
+## Setup & Configuration
 
 ### API Provider Setup
 
@@ -79,7 +96,7 @@ A powerful AI-powered Chrome extension that captures real-time audio from browse
 2. **Get API Key**: Visit your chosen provider's website and create an API key
 3. **Configure Extension**:
    - Open the extension sidepanel
-   - Click the settings icon (⚙️)
+   - Click the settings icon
    - Select your provider from the dropdown
    - Enter your API key and click "Save"
 
@@ -112,59 +129,99 @@ The extension requires these permissions:
 - **Clear Content**: Use "Clear" button to remove all transcription data
 - **Reset Settings**: Use "Reset" button in settings to clear all data and API keys
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 chrome-extension/
-├── manifest.json          # Extension configuration
-├── service-worker.js      # Background processing
-├── sidepanel.html         # Main interface
-├── sidepanel.css          # Styling
-├── js/                    # Modular JavaScript architecture
+├── manifest.json              # Extension configuration
+├── service-worker.js          # Background processing
+├── sidepanel.html             # Main interface
+├── sidepanel.css              # Styling
+├── js/                        # Functional JavaScript architecture
 │   ├── config/
-│   │   └── app-config.js          # Central configuration
+│   │   └── app-config.js              # Immutable configuration
 │   ├── modules/
-│   │   ├── settings-controller.js  # Settings panel management
-│   │   ├── state-manager.js        # Application state
-│   │   ├── storage-manager.js      # Chrome storage operations
-│   │   └── transcription-service.js # Multi-provider transcription
+│   │   ├── settings-controller.js     # Pure settings management
+│   │   ├── state-manager.js           # Functional state handling
+│   │   ├── storage-manager.js         # Storage operations
+│   │   └── transcription-service.js   # Multi-provider API service
 │   ├── utils/
-│   │   ├── audio-utils.js          # Audio processing utilities
-│   │   └── dom-utils.js            # DOM manipulation utilities
-│   └── main.js                     # Main application controller
-├── icons/                 # Extension icons
+│   │   ├── audio-utils.js             # Audio processing utilities
+│   │   └── dom-utils.js               # DOM manipulation utilities
+│   └── main.js                        # Main application controller
+├── icons/                     # Extension icons
 │   ├── icon16.png
 │   ├── icon48.png
-│   ├── icon128.png
-│   └── settings-48.png
-├── ARCHITECTURE.md        # Detailed architecture documentation
-└── README.md             # This file
+│   └── icon128.png
+├── scripts/                   # Build system
+│   ├── build.cjs              # Production build script
+│   └── package.cjs            # Automated packaging
+├── .github/workflows/         # CI/CD automation
+│   └── build-and-release.yml  # Automated releases
+├── webpack.config.cjs         # Webpack build configuration
+├── package.json               # Dependencies and scripts
+├── .eslintrc.cjs             # Code quality rules
+├── .gitignore                 # Git ignore patterns
+├── ARCHITECTURE.md            # Detailed architecture docs
+├── BUILD.md                   # Build system documentation
+└── README.md                  # This file
 ```
 
 ### Architecture Highlights
 
-- **Modular Design**: Clean separation of concerns with ES6 modules
-- **Modern JavaScript**: Uses latest standards and best practices
+- **Functional Programming**: Pure functions, immutable data structures, and minimal side effects
+- **Modern JavaScript**: ES6+ modules with advanced language features
+- **Production Build System**: Webpack + Terser achieving 55% compression ratio
+- **Automated CI/CD**: GitHub Actions for builds and releases
 - **Scalable**: Easy to add new features and API providers
-- **Maintainable**: Well-organized code with clear naming conventions
+- **Maintainable**: Well-organized code with clear separation of concerns
 
-## 🛠️ Development
+## Development
 
 ### Local Development
 
 1. Make changes to the source files
 2. Go to `chrome://extensions/`
 3. Click the refresh icon on the extension card
-4. Test your changes in the sidepanel
+4. Verify your changes in the sidepanel
 
 ### Building for Production
 
-The extension is ready for distribution as-is. To create a release package:
+The project includes a comprehensive build system for optimized production releases:
 
-1. Zip the entire project folder (excluding `.git`, `node_modules`, etc.)
-2. The zip file can be distributed or submitted to Chrome Web Store
+```bash
+# Install dependencies
+npm install
 
-## 🔧 Technical Details
+# Development build (with source maps)
+npm run build:dev
+
+# Production build (minified and optimized)
+npm run build:prod
+
+# Create distribution package
+npm run package
+
+# Complete release process
+npm run release
+```
+
+**Build Features:**
+- **JavaScript Compression**: 55% size reduction (90KB → 40KB) using Webpack + Terser
+- **ES6+ Transpilation**: Chrome 88+ compatibility with Babel
+- **Tree Shaking**: Removes unused code for smaller bundles
+- **Automated Packaging**: Creates zip files with checksums and release notes
+
+**Automated Releases:**
+Create GitHub releases by pushing version tags:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+This triggers GitHub Actions to automatically build, optimize, and create a release package.
+
+## Technical Details
 
 ### Architecture
 
@@ -184,8 +241,9 @@ The extension is ready for distribution as-is. To create a release package:
 ### Performance
 
 - **Memory Efficient**: Automatic cleanup of audio buffers
-- **CPU Optimized**: Minimal processing overhead
+- **CPU Optimized**: Minimal processing overhead with functional architecture
 - **Network Smart**: Offline buffering with auto-retry
+- **Compressed Builds**: 55% size reduction (90KB → 40KB) in production
 - **Modular Loading**: Only load required components
 
 ### Audio Processing
@@ -194,7 +252,7 @@ The extension is ready for distribution as-is. To create a release package:
 - **Overlap**: 3-second overlap between chunks
 - **Format**: WAV audio at optimal quality for transcription
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -225,11 +283,11 @@ The extension is ready for distribution as-is. To create a release package:
 
 ### Getting Help
 
-- Check the [Issues](https://github.com/your-username/ai-audio-transcriber/issues) page
+- Check the [Issues](https://github.com/your-username/real-time-audio-transcriber/issues) page
 - Create a new issue with detailed description
 - Include Chrome version and error messages
 
-## 📝 API Reference
+## API Reference
 
 ### Supported Transcription APIs
 
@@ -269,13 +327,15 @@ We welcome contributions! Please follow these steps:
 
 ### Development Guidelines
 
-- Follow existing code style and modular architecture
+- Follow functional programming principles with pure functions
+- Use existing build system for optimized production builds
 - Add comprehensive comments for complex functionality
-- Test thoroughly with multiple API providers
+- Verify thoroughly with multiple API providers
 - Update documentation as needed
-- Use ESLint for code quality
+- Use ESLint for code quality and consistency
+- Run `npm run format` before commits
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -288,17 +348,30 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Chrome Extensions team for excellent APIs
 - Open source community for inspiration and tools
 
-## 📊 Statistics
+## Statistics
 
-- **Languages**: HTML, CSS, JavaScript (ES6 Modules)
+- **Languages**: HTML, CSS, JavaScript (ES6+ with Functional Programming)
 - **APIs Used**: Chrome Extensions API, Web Audio API, Multiple AI Transcription APIs
-- **Architecture**: Modular design with 8 core modules
+- **Architecture**: Functional programming with 8 core modules
 - **Browser Support**: Chrome 88+
-- **File Size**: ~70KB (modular architecture)
+- **Source Size**: ~90KB (functional modular architecture)
+- **Production Size**: ~40KB (55% compression with Webpack + Terser)
+- **Distribution Package**: ~30KB (complete optimized zip)
 - **API Providers**: 4 supported transcription services
+- **Build System**: Webpack, Babel, Terser, GitHub Actions CI/CD
+
+## License
+
+MIT License - Copyright (c) 2025 Manasa Pasupuleti
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
-**Made with ❤️ for better accessibility and productivity**
+**Made with care for better accessibility and productivity by Manasa Pasupuleti**
 
-For more information, visit our [GitHub repository](https://github.com/your-username/ai-audio-transcriber) or check out the [demo video](https://your-demo-link.com).
+For more information, visit our [GitHub repository](https://github.com/your-username/real-time-audio-transcriber) or check out the [demo video](https://your-demo-link.com).

@@ -1,28 +1,13 @@
-/**
- * Application Configuration
- * Functional configuration module for the AI Audio Transcriber Chrome Extension
- * All configuration objects are frozen to ensure immutability
- */
-
-// ==================== AUDIO PROCESSING CONFIGURATION ====================
+// Audio settings
 export const AUDIO_CONFIG = Object.freeze({
-  /** Interval between starting new audio segments (30 seconds) */
-  STEP_MS: 30000,
-
-  /** Length of each audio segment with 3-second overlap (33 seconds) */
-  DURATION_MS: 33000,
-
-  /** MediaRecorder data availability interval (3 seconds) */
-  CHUNK_MS: 3000,
-
-  /** Maximum retry attempts for transcription */
+  STEP_MS: 30000, // 30 seconds between segments
+  DURATION_MS: 33000, // 33 seconds per segment (3s overlap)
+  CHUNK_MS: 3000, // 3 second chunks
   MAX_RETRY_ATTEMPTS: 3,
-
-  /** Tab detection interval (3 seconds) */
   TAB_DETECTION_INTERVAL_MS: 3000,
 });
 
-// ==================== API PROVIDER CONFIGURATION ====================
+// API provider configs
 export const API_PROVIDERS = Object.freeze({
   gemini: Object.freeze({
     id: 'gemini',
@@ -66,7 +51,7 @@ export const API_PROVIDERS = Object.freeze({
   }),
 });
 
-// ==================== UI CONSTANTS ====================
+// UI constants
 export const UI_CONSTANTS = Object.freeze({
   CSS_CLASSES: Object.freeze({
     STATUS_IDLE: 'status-idle',
@@ -110,13 +95,13 @@ export const UI_CONSTANTS = Object.freeze({
   }),
 });
 
-// ==================== STORAGE KEYS ====================
+// Storage keys
 export const STORAGE_KEYS = Object.freeze({
   API_PROVIDER: 'API_PROVIDER',
   DEFAULT_PROVIDER: 'gemini',
 });
 
-// ==================== TIMER CONFIGURATION ====================
+// Timer config
 export const TIMER_CONFIG = Object.freeze({
   UPDATE_INTERVAL_MS: 1000,
   FORMAT_OPTIONS: Object.freeze({
@@ -128,9 +113,8 @@ export const TIMER_CONFIG = Object.freeze({
   }),
 });
 
-// ==================== CONFIGURATION UTILITIES ====================
+// Utils
 export const getApiProviderConfig = providerId => API_PROVIDERS[providerId] || null;
-
 export const getDefaultProvider = () => STORAGE_KEYS.DEFAULT_PROVIDER;
 
 export const getAllProviderIds = () => Object.keys(API_PROVIDERS);

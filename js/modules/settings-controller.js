@@ -1,7 +1,4 @@
-/**
- * Settings Panel Controller Module
- * Functional settings panel management for API provider selection and key management
- */
+
 
 import { API_PROVIDERS, UI_CONSTANTS } from '../config/app-config.js';
 import {
@@ -30,16 +27,13 @@ import {
   isSettingsPanelOpen,
 } from './state-manager.js';
 
-// ==================== SETTINGS STATE ====================
+
 let settingsState = {
   isInitialized: false,
   statusManager: null,
 };
 
-/**
- * Initialize settings controller
- * @param {Object} statusManager - Status manager for UI feedback
- */
+
 export const initializeSettings = async statusManager => {
   if (settingsState.isInitialized) return;
 
@@ -49,9 +43,7 @@ export const initializeSettings = async statusManager => {
   settingsState.isInitialized = true;
 };
 
-/**
- * Bind all event listeners
- */
+
 const bindAllEventListeners = () => {
   bindPanelControls();
   bindApiProviderSelection();
@@ -60,11 +52,9 @@ const bindAllEventListeners = () => {
   bindKeyboardShortcuts();
 };
 
-// ==================== PANEL CONTROLS ====================
 
-/**
- * Bind panel open/close controls
- */
+
+
 const bindPanelControls = () => {
   const elements = getDOMElements();
 
@@ -86,9 +76,7 @@ const bindPanelControls = () => {
   });
 };
 
-/**
- * Bind keyboard shortcuts
- */
+
 const bindKeyboardShortcuts = () => {
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && isPanelOpen()) {
@@ -97,9 +85,7 @@ const bindKeyboardShortcuts = () => {
   });
 };
 
-/**
- * Open settings panel
- */
+
 export const openPanel = () => {
   const elements = getDOMElements();
   addClass(elements.settingsPanel, UI_CONSTANTS.CSS_CLASSES.OPEN);
@@ -107,9 +93,7 @@ export const openPanel = () => {
   openSettingsPanel();
 };
 
-/**
- * Close settings panel
- */
+
 export const closePanel = () => {
   const elements = getDOMElements();
   removeClass(elements.settingsPanel, UI_CONSTANTS.CSS_CLASSES.OPEN);
@@ -117,9 +101,7 @@ export const closePanel = () => {
   closeSettingsPanel();
 };
 
-/**
- * Toggle settings panel
- */
+
 export const togglePanel = () => {
   if (isPanelOpen()) {
     closePanel();
@@ -128,20 +110,15 @@ export const togglePanel = () => {
   }
 };
 
-/**
- * Check if panel is open
- * @returns {boolean} Whether panel is open
- */
+
 export const isPanelOpen = () => {
   const elements = getDOMElements();
   return elements.settingsPanel?.classList.contains(UI_CONSTANTS.CSS_CLASSES.OPEN) || false;
 };
 
-// ==================== API PROVIDER MANAGEMENT ====================
 
-/**
- * Bind API provider selection
- */
+
+
 const bindApiProviderSelection = () => {
   const elements = getDOMElements();
   elements.apiProviderSelect?.addEventListener('change', async event => {
@@ -150,10 +127,7 @@ const bindApiProviderSelection = () => {
   });
 };
 
-/**
- * Handle provider change
- * @param {string} providerId - Provider ID
- */
+
 const handleProviderChange = async providerId => {
   try {
     // Validate provider
@@ -181,10 +155,7 @@ const handleProviderChange = async providerId => {
   }
 };
 
-/**
- * Show API configuration panel for provider
- * @param {string} providerId - Provider ID
- */
+
 const showApiConfigurationPanel = providerId => {
   // Hide all configuration panels
   Object.values(API_PROVIDERS).forEach(provider => {
@@ -204,11 +175,9 @@ const showApiConfigurationPanel = providerId => {
   }
 };
 
-// ==================== API KEY MANAGEMENT ====================
 
-/**
- * Bind API key save buttons
- */
+
+
 const bindApiKeySaveButtons = () => {
   Object.entries(API_PROVIDERS).forEach(([providerId, config]) => {
     const saveButton = document.getElementById(config.saveButtonElementId);
@@ -220,10 +189,7 @@ const bindApiKeySaveButtons = () => {
   });
 };
 
-/**
- * Handle API key save
- * @param {string} providerId - Provider ID
- */
+
 const handleApiKeySave = async providerId => {
   const config = API_PROVIDERS[providerId];
   if (!config) {
@@ -269,11 +235,7 @@ const handleApiKeySave = async providerId => {
   }
 };
 
-/**
- * Set button saving state
- * @param {HTMLElement} buttonElement - Button element
- * @param {boolean} isSaving - Whether button is in saving state
- */
+
 const setButtonSavingState = (buttonElement, isSaving) => {
   if (!buttonElement) return;
 
@@ -287,10 +249,7 @@ const setButtonSavingState = (buttonElement, isSaving) => {
   }
 };
 
-/**
- * Set button saved state
- * @param {HTMLElement} buttonElement - Button element
- */
+
 const setButtonSavedState = buttonElement => {
   if (!buttonElement) return;
 
@@ -298,11 +257,9 @@ const setButtonSavedState = buttonElement => {
   buttonElement.style.background = '#16a34a'; // Green success color
 };
 
-// ==================== CONFIGURATION LOADING ====================
 
-/**
- * Load API configuration
- */
+
+
 const loadApiConfiguration = async () => {
   try {
     const elements = getDOMElements();
@@ -335,18 +292,14 @@ const loadApiConfiguration = async () => {
   }
 };
 
-/**
- * Refresh configuration
- */
+
 export const refreshConfiguration = async () => {
   await loadApiConfiguration();
 };
 
-// ==================== RESET FUNCTIONALITY ====================
 
-/**
- * Bind reset button
- */
+
+
 const bindResetButton = () => {
   const elements = getDOMElements();
   elements.resetButton?.addEventListener('click', () => {
@@ -354,9 +307,7 @@ const bindResetButton = () => {
   });
 };
 
-/**
- * Handle settings reset
- */
+
 const handleReset = async () => {
   const confirmMessage =
     'Are you sure you want to reset everything? This will clear all API keys and transcription data.';
@@ -425,39 +376,26 @@ const handleReset = async () => {
   }
 };
 
-// ==================== UTILITY FUNCTIONS ====================
 
-/**
- * Set status message
- * @param {string} message - Status message
- * @param {string} type - Status type
- */
+
+
 const setStatus = (message, type) => {
   if (settingsState.statusManager && settingsState.statusManager.setStatus) {
     settingsState.statusManager.setStatus(message, type);
   }
 };
 
-/**
- * Get current API configuration
- * @returns {Promise<Object>} Current API configuration
- */
+
 export const getCurrentConfiguration = async () => {
   return await getCurrentApiConfiguration();
 };
 
-/**
- * Check if settings are initialized
- * @returns {boolean} Whether settings are initialized
- */
+
 export const isInitialized = () => {
   return settingsState.isInitialized;
 };
 
-/**
- * Get settings state summary
- * @returns {Object} Settings state summary
- */
+
 export const getSettingsState = () => {
   return {
     isInitialized: settingsState.isInitialized,
@@ -466,21 +404,14 @@ export const getSettingsState = () => {
   };
 };
 
-// ==================== EVENT HANDLING ====================
 
-/**
- * Handle provider switch from external source
- * @param {string} providerId - Provider ID
- */
+
+
 export const switchProvider = async providerId => {
   await handleProviderChange(providerId);
 };
 
-/**
- * Handle API key update from external source
- * @param {string} providerId - Provider ID
- * @param {string} apiKey - API key
- */
+
 export const updateApiKey = async (providerId, apiKey) => {
   try {
     await saveValidatedApiKey(providerId, apiKey);

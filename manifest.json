@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "AI Audio Transcriber",
+  "name": "Real time audio transcriber",
   "version": "1.0.0",
   "description": "AI-powered real-time audio transcription from browser tabs and microphone using Google Gemini API",
+  "author": "Manasa Pasupuleti",
   "permissions": [
     "activeTab",
     "tabs",
@@ -24,7 +25,7 @@
     "default_path": "sidepanel.html"
   },
   "action": {
-    "default_title": "AI Transcriber"
+    "default_title": "Real time audio transcriber"
   },
   "icons": {
     "16": "icons/icon16.png",

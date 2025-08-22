@@ -1,20 +1,5 @@
-/**
- * Transcription Service Module
- * Functional transcription API integrations with proper error handling and retry logic
- */
-
 import { API_PROVIDERS, AUDIO_CONFIG } from '../config/app-config.js';
 import { base64ToBlob } from '../utils/audio-utils.js';
-
-// ==================== CORE TRANSCRIPTION FUNCTIONS ====================
-
-/**
- * Perform transcription with retry logic
- * @param {Function} transcriptionFn - Transcription function to call
- * @param {Object} audioData - Audio data object
- * @param {number} maxAttempts - Maximum retry attempts
- * @returns {Promise<Object>} Transcription result
- */
 export const transcribeWithRetry = async (
   transcriptionFn,
   audioData,
@@ -23,12 +8,7 @@ export const transcribeWithRetry = async (
   return await retryApiCall(() => transcriptionFn(audioData), maxAttempts);
 };
 
-/**
- * Retry API call with exponential backoff
- * @param {Function} apiCall - API call function
- * @param {number} maxAttempts - Maximum attempts
- * @returns {Promise<Object>} API call result
- */
+// Retry with exponential backoff
 const retryApiCall = async (apiCall, maxAttempts) => {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -66,16 +46,12 @@ const retryApiCall = async (apiCall, maxAttempts) => {
   };
 };
 
-/**
- * Check if error is transient (retryable)
- * @param {Error} error - Error object
- * @returns {boolean} Whether error is transient
- */
+// Check if error can be retried
 const isTransientError = error => {
   const transientPatterns = [
     /failed to fetch/i,
     /network/i,
-    /5\d{2}/, // 5xx HTTP status codes
+    /5\d{2}/, // 5xx errors
     /timeout/i,
     /temporarily/i,
   ];
@@ -84,21 +60,11 @@ const isTransientError = error => {
   return transientPatterns.some(pattern => pattern.test(errorMessage));
 };
 
-/**
- * Calculate exponential backoff delay
- * @param {number} attempt - Current attempt number
- * @returns {number} Delay in milliseconds
- */
 const calculateBackoffDelay = attempt => {
-  // Exponential backoff: 1.5s, 3s, 6s, etc.
+  // 1.5s, 3s, 6s, etc.
   return 1500 * Math.pow(2, attempt - 1);
 };
 
-/**
- * Safely parse JSON response
- * @param {Response} response - Fetch response
- * @returns {Promise<Object|null>} Parsed JSON or null
- */
 const safeJsonParse = async response => {
   try {
     return await response.json();
@@ -108,13 +74,7 @@ const safeJsonParse = async response => {
   }
 };
 
-// ==================== PROVIDER-SPECIFIC TRANSCRIPTION FUNCTIONS ====================
-
-/**
- * Google Gemini transcription
- * @param {Object} audioData - Audio data with base64, mimeType, apiKey
- * @returns {Promise<string>} Transcription text
- */
+// Google Gemini API
 export const transcribeWithGemini = async ({ base64, mimeType, apiKey }) => {
   const config = API_PROVIDERS.gemini;
   const endpoint = `${config.endpoint}?key=${apiKey}`;
@@ -155,12 +115,7 @@ export const transcribeWithGemini = async ({ base64, mimeType, apiKey }) => {
   return text;
 };
 
-/**
- * Check if Gemini error is fatal
- * @param {string} status - Error status
- * @param {number} httpStatus - HTTP status code
- * @returns {boolean} Whether error is fatal
- */
+// Check if Gemini error is fatal
 const isGeminiFatalError = (status, httpStatus) => {
   const fatalStatuses = [
     'INVALID_ARGUMENT',
@@ -174,11 +129,7 @@ const isGeminiFatalError = (status, httpStatus) => {
   return fatalStatuses.includes(status) || fatalHttpCodes.includes(httpStatus);
 };
 
-/**
- * OpenAI Whisper transcription
- * @param {Object} audioData - Audio data with base64, mimeType, apiKey
- * @returns {Promise<string>} Transcription text
- */
+// OpenAI Whisper API
 export const transcribeWithOpenAI = async ({ base64, mimeType, apiKey }) => {
   const config = API_PROVIDERS.openai;
   const audioBlob = base64ToBlob(base64, mimeType);
@@ -209,11 +160,7 @@ export const transcribeWithOpenAI = async ({ base64, mimeType, apiKey }) => {
   return text;
 };
 
-/**
- * Deepgram transcription
- * @param {Object} audioData - Audio data with base64, mimeType, apiKey
- * @returns {Promise<string>} Transcription text
- */
+// Deepgram API
 export const transcribeWithDeepgram = async ({ base64, mimeType, apiKey }) => {
   const config = API_PROVIDERS.deepgram;
   const audioBlob = base64ToBlob(base64, mimeType);
@@ -244,11 +191,7 @@ export const transcribeWithDeepgram = async ({ base64, mimeType, apiKey }) => {
   return text;
 };
 
-/**
- * Fireworks AI transcription
- * @param {Object} audioData - Audio data with base64, mimeType, apiKey
- * @returns {Promise<string>} Transcription text
- */
+// Fireworks AI API
 export const transcribeWithFireworks = async ({ base64, mimeType, apiKey }) => {
   const config = API_PROVIDERS.fireworks;
   const audioBlob = base64ToBlob(base64, mimeType);
@@ -279,13 +222,7 @@ export const transcribeWithFireworks = async ({ base64, mimeType, apiKey }) => {
   return text;
 };
 
-// ==================== TRANSCRIPTION SERVICE FUNCTIONS ====================
-
-/**
- * Get transcription function for provider
- * @param {string} providerId - Provider ID
- * @returns {Function} Transcription function
- */
+// Get transcription function for provider
 export const getTranscriptionFunction = providerId => {
   const transcriptionFunctions = {
     gemini: transcribeWithGemini,
@@ -302,21 +239,11 @@ export const getTranscriptionFunction = providerId => {
   return transcriptionFn;
 };
 
-/**
- * Transcribe audio with specified provider
- * @param {string} providerId - Provider ID
- * @param {Object} audioData - Audio data
- * @returns {Promise<Object>} Transcription result
- */
 export const transcribeAudio = async (providerId, audioData) => {
   const transcriptionFn = getTranscriptionFunction(providerId);
   return await transcribeWithRetry(transcriptionFn, audioData);
 };
 
-/**
- * Get supported provider IDs
- * @returns {string[]} Array of provider IDs
- */
 export const getSupportedProviders = () => {
   return Object.keys(API_PROVIDERS);
 };
@@ -350,8 +277,6 @@ export const getProviderConfig = providerId => {
   validateProvider(providerId);
   return API_PROVIDERS[providerId];
 };
-
-// ==================== TRANSCRIPTION MANAGER STATE ====================
 
 let transcriptionManagerState = {
   currentProvider: null,
@@ -400,14 +325,7 @@ export const resetTranscriptionManager = () => {
   };
 };
 
-// ==================== UTILITY FUNCTIONS ====================
-
-/**
- * Test provider configuration
- * @param {string} providerId - Provider ID
- * @param {string} apiKey - API key
- * @returns {Promise<Object>} Test result
- */
+// Test provider config
 export const testProviderConfiguration = async (providerId, apiKey) => {
   try {
     validateProvider(providerId);

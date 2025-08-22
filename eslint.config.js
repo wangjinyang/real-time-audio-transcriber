@@ -1,4 +1,3 @@
-// ESLint flat config for Chrome Extension (ESLint v9+)
 import js from '@eslint/js';
 
 export default [

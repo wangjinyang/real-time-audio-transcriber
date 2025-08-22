@@ -1,0 +1,97 @@
+name: Build and Release Chrome Extension
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual trigger
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Lint code
+      run: npm run lint
+      
+    - name: Format check
+      run: npm run format:check
+      
+    - name: Install build dependencies
+      run: |
+        npm install --save-dev terser webpack webpack-cli copy-webpack-plugin
+        
+    - name: Build extension
+      run: npm run build
+      
+    - name: Create extension package
+      run: npm run package
+      
+    - name: Get version from tag or input
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.get_version.outputs.version }}
+        name: AI Audio Transcriber ${{ steps.get_version.outputs.version }}
+        body: |
+          ## Chrome Extension Release ${{ steps.get_version.outputs.version }}
+          
+          ### Features
+          - Real-time audio transcription from browser tabs
+          - Multiple AI provider support (Gemini, OpenAI, Deepgram, Fireworks)
+          - Functional programming architecture
+          - Modern ES6+ JavaScript
+          
+          ### Installation
+          1. Download the `real-time-audio-transcriber-${{ steps.get_version.outputs.version }}.zip` file
+          2. Extract the contents
+          3. Open Chrome and go to `chrome://extensions/`
+          4. Enable "Developer mode"
+          5. Click "Load unpacked" and select the extracted folder
+          
+          ### Configuration
+          - Configure your preferred AI provider API key in the extension settings
+          - Grant microphone and tab capture permissions when prompted
+          
+          ---
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v1.0.0...${{ steps.get_version.outputs.version }}
+        files: |
+          dist/real-time-audio-transcriber-*.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: chrome-extension-build
+        path: |
+          dist/
+          build/
+        retention-days: 30

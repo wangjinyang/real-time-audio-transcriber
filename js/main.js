@@ -1,9 +1,4 @@
-/**
- * AI Audio Transcriber - Main Application Controller
- * Functional orchestration of all modules and main application flow
- */
 
-// Import all modules
 import { AUDIO_CONFIG, UI_CONSTANTS } from './config/app-config.js';
 import {
   initializeDOMElements,
@@ -63,34 +58,32 @@ import {
 } from './modules/transcription-service.js';
 import { initializeSettings } from './modules/settings-controller.js';
 
-// ==================== APPLICATION STATE ====================
+
 let appState = {
   isInitialized: false,
   audioPlaybackSessions: new Map(),
 };
 
-// ==================== INITIALIZATION ====================
 
-/**
- * Initialize the application
- */
+
+
 export const initializeApp = async () => {
   if (appState.isInitialized) return;
 
   try {
-    // Initialize DOM elements
+  
     initializeDOMElements();
 
-    // Initialize status manager
+   
     const elements = getDOMElements();
     initializeStatusManager(elements.statusDisplay);
 
-    // Initialize settings
+  
     await initializeSettings({
       setStatus: (message, type) => setStatus(message, type),
     });
 
-    // Set up event listeners
+    
     bindEventListeners();
 
     // Start tab detection
@@ -108,11 +101,9 @@ export const initializeApp = async () => {
   }
 };
 
-// ==================== EVENT BINDING ====================
 
-/**
- * Bind all event listeners
- */
+
+
 const bindEventListeners = () => {
   const elements = getDOMElements();
 
@@ -159,11 +150,9 @@ const bindEventListeners = () => {
   });
 };
 
-// ==================== RECORDING CONTROL ====================
 
-/**
- * Handle toggle recording button
- */
+
+
 const handleToggleRecording = async () => {
   try {
     if (isRecording()) {
@@ -177,9 +166,7 @@ const handleToggleRecording = async () => {
   }
 };
 
-/**
- * Start new recording session
- */
+
 const startNewRecording = async () => {
   try {
     const elements = getDOMElements();
@@ -226,10 +213,7 @@ const startNewRecording = async () => {
   }
 };
 
-/**
- * Start tab recording session
- * @param {number} tabId - Tab ID to record
- */
+
 const startTabSession = async tabId => {
   try {
     const stream = await captureTabAudio(tabId);
@@ -243,9 +227,7 @@ const startTabSession = async tabId => {
   }
 };
 
-/**
- * Start microphone recording session
- */
+
 const startMicrophoneSession = async () => {
   try {
     const stream = await captureMicrophoneAudio();
@@ -256,13 +238,7 @@ const startMicrophoneSession = async () => {
   }
 };
 
-/**
- * Initialize audio session
- * @param {string} sessionId - Session identifier
- * @param {MediaStream} stream - Audio stream
- * @param {string} label - Session label
- * @param {boolean} enablePlayback - Whether to enable audio playback
- */
+
 const initializeAudioSession = async (sessionId, stream, label, enablePlayback = true) => {
   const mimeType = getSupportedMimeType(stream);
   const activeRecorders = new Set();
@@ -294,13 +270,10 @@ const initializeAudioSession = async (sessionId, stream, label, enablePlayback =
   }, AUDIO_CONFIG.STEP_MS);
 
   // Add session start notification
-  addTranscriptionItem(new Date().toLocaleTimeString(), `${label} started`, '');
+  addTranscriptionToUI(new Date().toLocaleTimeString(), `${label} started`, '');
 };
 
-/**
- * Start recording segment for session
- * @param {string} sessionId - Session identifier
- */
+
 const startRecordingSegment = sessionId => {
   const session = getSession(sessionId);
   if (!session) return;
@@ -367,10 +340,7 @@ const startRecordingSegment = sessionId => {
   }, AUDIO_CONFIG.DURATION_MS);
 };
 
-/**
- * Process transcription data
- * @param {Object} data - Transcription data
- */
+
 const processTranscription = async data => {
   try {
     const result = await transcribeWithCurrentProvider({
@@ -406,9 +376,7 @@ const processTranscription = async data => {
   }
 };
 
-/**
- * Stop all recording sessions
- */
+
 const stopAllRecording = async () => {
   setRecordingStop();
 
@@ -424,10 +392,7 @@ const stopAllRecording = async () => {
   setStatus(UI_CONSTANTS.STATUS_MESSAGES.IDLE, 'idle');
 };
 
-/**
- * Stop individual session
- * @param {string} sessionId - Session identifier
- */
+
 const stopSession = async sessionId => {
   const session = getSession(sessionId);
   if (!session) return;
@@ -468,12 +433,9 @@ const stopSession = async sessionId => {
   addTranscriptionToUI(new Date().toLocaleTimeString(), `${sessionId} stopped`, '');
 };
 
-// ==================== TAB DETECTION AND MANAGEMENT ====================
 
-/**
- * Handle tab selection changes
- * @param {Event} event - Change event
- */
+
+
 const handleTabSelectionChange = async event => {
   if (!isRecording()) return;
 
@@ -494,16 +456,12 @@ const handleTabSelectionChange = async event => {
   }
 };
 
-/**
- * Start automatic tab detection
- */
+
 const startTabAutoDetection = () => {
   startTabDetection(updateTabsList, AUDIO_CONFIG.TAB_DETECTION_INTERVAL_MS);
 };
 
-/**
- * Update tabs list in UI
- */
+
 const updateTabsList = async () => {
   const elements = getDOMElements();
   if (!elements.tabsList) return;
@@ -533,12 +491,9 @@ const updateTabsList = async () => {
   }
 };
 
-// ==================== UI MANAGEMENT ====================
 
-/**
- * Set recording UI state
- * @param {boolean} recording - Whether recording is active
- */
+
+
 const setRecordingUIState = recording => {
   const elements = getDOMElements();
 
@@ -551,23 +506,23 @@ const setRecordingUIState = recording => {
   }
 };
 
-/**
- * Update button visibility based on content
- */
+
 const updateButtonVisibility = () => {
   const elements = getDOMElements();
-  const hasContent = elements.transcriptionDisplay?.children.length > 0;
+  if (!elements.transcriptionDisplay || !elements.transcriptionControls) return;
+  
+  // Check if there are any transcription items (not just placeholder or loading)
+  const transcriptionItems = elements.transcriptionDisplay.querySelectorAll('.transcription-item');
+  const hasRealContent = transcriptionItems.length > 0;
 
-  if (hasContent && !elements.transcriptionDisplay.querySelector('.placeholder')) {
+  if (hasRealContent) {
     addClass(elements.transcriptionControls, UI_CONSTANTS.CSS_CLASSES.HAS_CONTENT);
   } else {
     removeClass(elements.transcriptionControls, UI_CONSTANTS.CSS_CLASSES.HAS_CONTENT);
   }
 };
 
-/**
- * Start recording timer
- */
+
 const startRecordingTimer = () => {
   const elements = getDOMElements();
   startTimer(formattedTime => {
@@ -575,24 +530,25 @@ const startRecordingTimer = () => {
   });
 };
 
-/**
- * Stop recording timer
- */
+
 const stopRecordingTimer = () => {
   const elements = getDOMElements();
   stopTimer();
   setText(elements.timerDisplay, '00:00:00');
 };
 
-/**
- * Add transcription item to UI
- * @param {string} timestamp - Formatted timestamp
- * @param {string} channelLabel - Channel label
- * @param {string} text - Transcription text
- */
+
 const addTranscriptionToUI = (timestamp, channelLabel, text) => {
   const elements = getDOMElements();
   if (!elements.transcriptionDisplay) return;
+
+  // Remove placeholder when first real transcription appears
+  if (text) {
+    const placeholder = elements.transcriptionDisplay.querySelector('.placeholder');
+    if (placeholder) {
+      placeholder.remove();
+    }
+  }
 
   // Hide loading animation when first transcription appears
   if (text && elements.loadingAnimation?.style.display !== 'none') {
@@ -608,11 +564,9 @@ const addTranscriptionToUI = (timestamp, channelLabel, text) => {
   updateButtonVisibility();
 };
 
-// ==================== EXPORT FUNCTIONALITY ====================
 
-/**
- * Handle copy transcription
- */
+
+
 const handleCopyTranscription = () => {
   const elements = getDOMElements();
   const text = elements.transcriptionDisplay?.innerText || '';
@@ -621,9 +575,7 @@ const handleCopyTranscription = () => {
   });
 };
 
-/**
- * Handle download transcription
- */
+
 const handleDownloadTranscription = () => {
   const elements = getDOMElements();
   const text = elements.transcriptionDisplay?.innerText || '';
@@ -638,9 +590,7 @@ const handleDownloadTranscription = () => {
   URL.revokeObjectURL(url);
 };
 
-/**
- * Handle clear transcription
- */
+
 const handleClearTranscription = () => {
   const elements = getDOMElements();
   const confirmMessage = 'Are you sure you want to clear all transcription content?';
@@ -657,11 +607,9 @@ const handleClearTranscription = () => {
   }
 };
 
-// ==================== NETWORK MANAGEMENT ====================
 
-/**
- * Handle network reconnection
- */
+
+
 const handleNetworkReconnection = async () => {
   if (!hasPendingItems()) return;
 
@@ -677,41 +625,37 @@ const handleNetworkReconnection = async () => {
   }
 };
 
-// ==================== EVENT HANDLERS ====================
 
-/**
- * Handle settings reset
- */
+
+
 const handleSettingsReset = () => {
   // Clear application state
   resetState();
 
-  // Reset UI
+ 
   stopRecordingTimer();
   updateButtonVisibility();
 };
 
-// ==================== CLEANUP ====================
 
-/**
- * Cleanup resources
- */
+
+
 const cleanup = () => {
   stopTabDetection();
   closeAllAudioContexts();
 
-  // Clear audio playback sessions
+  
   appState.audioPlaybackSessions.clear();
 };
 
-// ==================== APPLICATION INITIALIZATION ====================
 
-// Initialize the application when DOM is ready
+
+
 document.addEventListener('DOMContentLoaded', () => {
   initializeApp();
 });
 
-// Export for global access if needed
+
 window.AudioTranscriberApp = {
   initializeApp,
   handleToggleRecording,

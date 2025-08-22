@@ -1,49 +1,42 @@
-/**
- * AI Audio Transcriber Chrome Extension - Styles
- * Modern design system with consistent theming and responsive components
- */
-
-/* ==================== DESIGN SYSTEM ==================== */
-/* CSS Custom Properties for consistent theming */
+/* ==================== VARIABLES ==================== */
 :root {
-  /* Primary color palette */
+  
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
 
-  /* Semantic colors */
+  
   --success-color: #059669;
   --success-hover: #047857;
   --danger-color: #dc2626;
   --danger-hover: #b91c1c;
   --warning-color: #d97706;
 
-  /* Surface and background colors */
+ 
   --surface: #ffffff;
   --background: #f8fafc;
   --border: #e2e8f0;
 
-  /* Text color hierarchy */
+  
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
 
-  /* Shadow system for depth */
+  
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 
-  /* Border radius scale */
+
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
 }
 
-/* ==================== BASE STYLES ==================== */
-/* Main body container with flexbox layout */
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   padding: 16px;
-  width: 380px; /* Fixed width for Chrome extension sidepanel */
+  width: 380px; 
   box-sizing: border-box;
   background: var(--background);
   color: var(--text-primary);
@@ -55,8 +48,7 @@ body {
   font-size: 14px;
 }
 
-/* ==================== HEADER SECTION ==================== */
-/* Main header with title, status, and settings button */
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -64,24 +56,24 @@ body {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 16px;
-  flex-shrink: 0; /* Prevent header from shrinking */
+  flex-shrink: 0; 
 }
 
-/* Header content container for title and status */
+
 .header-content {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-/* Header actions container (currently unused but reserved) */
+
 .header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Settings toggle button styling */
+
 .settings-toggle {
   padding: 8px;
   background: var(--surface);
@@ -97,13 +89,13 @@ body {
   flex-shrink: 0;
 }
 
-/* Settings icon styling with opacity transition */
+
 .settings-toggle img {
   opacity: 0.7;
   transition: opacity 0.2s ease;
 }
 
-/* Settings button hover state */
+
 .settings-toggle:hover {
   border-color: var(--primary-color);
   background: #f1f5f9;
@@ -113,19 +105,18 @@ body {
   opacity: 1;
 }
 
-/* Settings button active state when panel is open */
+
 .settings-toggle.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
 }
 
 .settings-toggle.active img {
-  filter: brightness(0) invert(1); /* Convert icon to white */
+  filter: brightness(0) invert(1); 
   opacity: 1;
 }
 
-/* ==================== SETTINGS PANEL ==================== */
-/* Overlay settings panel with smooth animations */
+
 .settings-panel {
   position: fixed;
   top: 0;
@@ -136,21 +127,21 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  z-index: 1000; /* Ensure panel appears above all content */
-  transform: translateY(-100%); /* Initially hidden above viewport */
+  z-index: 1000; 
+  transform: translateY(-100%); 
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
   margin: 16px;
 }
 
-/* Settings panel open state */
+
 .settings-panel.open {
   transform: translateY(0);
   opacity: 1;
 }
 
-/* Settings panel header with gradient background */
+
 .settings-header {
   display: flex;
   justify-content: space-between;
@@ -161,7 +152,7 @@ body {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
-/* Settings panel title */
+
 .settings-header h3 {
   margin: 0;
   font-size: 18px;
@@ -169,7 +160,7 @@ body {
   color: var(--text-primary);
 }
 
-/* Close button styling */
+
 .close-btn {
   background: none;
   border: none;
@@ -190,7 +181,7 @@ body {
   color: var(--text-primary);
 }
 
-/* Settings section containers */
+
 .settings-section {
   padding: 20px;
   border-bottom: 1px solid var(--border);
@@ -200,7 +191,7 @@ body {
   border-bottom: none;
 }
 
-/* Section headings */
+
 .settings-section h4 {
   margin: 0 0 16px 0;
   font-size: 16px;
@@ -208,7 +199,7 @@ body {
   color: var(--text-primary);
 }
 
-/* Input labels with uppercase styling */
+
 .settings-section label {
   display: block;
   color: var(--text-secondary);
@@ -219,7 +210,7 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* Standard input field styling */
+
 .settings-section input {
   width: 100%;
   padding: 12px 16px;
@@ -233,18 +224,18 @@ body {
   box-sizing: border-box;
 }
 
-/* Input focus state with blue border and shadow */
+
 .settings-section input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-/* API key input row with button */
+
 .settings-section .api-key-row {
   display: flex;
   gap: 12px;
-  align-items: stretch; /* Ensure equal height */
+  align-items: stretch; 
 }
 
 .settings-section .api-key-row input {
@@ -253,7 +244,7 @@ body {
   height: auto;
 }
 
-/* Secondary button styling within API key row */
+
 .settings-section .api-key-row .secondary {
   padding: 12px 16px;
   font-size: 14px;
@@ -263,7 +254,7 @@ body {
   justify-content: center;
 }
 
-/* API Provider Select Dropdown */
+
 .api-provider-select {
   width: 100%;
   padding: 12px 16px;
@@ -287,12 +278,12 @@ body {
   border-color: var(--primary-color);
 }
 
-/* API Configuration Container */
+
 #apiConfigContainer {
   position: relative;
 }
 
-/* Individual API Configuration Sections */
+
 .api-config {
   animation: fadeIn 0.3s ease;
 }
@@ -302,7 +293,7 @@ body {
   margin-top: 0;
 }
 
-/* API Description Text */
+
 .api-description {
   color: var(--text-muted);
   font-size: 12px;
@@ -319,7 +310,7 @@ body {
   text-decoration: underline;
 }
 
-/* Microphone toggle styling */
+
 .settings-section .mic-toggle {
   display: flex;
   align-items: center;
@@ -333,7 +324,7 @@ body {
   margin-bottom: 0;
 }
 
-/* Checkbox styling within mic toggle */
+
 .settings-section .mic-toggle input[type='checkbox'] {
   width: 18px;
   height: 18px;
@@ -341,7 +332,7 @@ body {
   margin: 0;
 }
 
-/* Reset section styling */
+
 .reset-description {
   color: var(--text-muted);
   font-size: 13px;
@@ -349,7 +340,7 @@ body {
   line-height: 1.4;
 }
 
-/* Reset button with destructive styling */
+
 .reset-btn {
   background: #ef4444;
   color: white;
@@ -385,7 +376,7 @@ h1 {
   letter-spacing: -0.025em;
 }
 
-/* Status Indicators */
+
 .status-idle {
   color: var(--text-muted);
   font-size: 13px;
@@ -432,7 +423,7 @@ h1 {
   font-size: 13px;
 }
 
-/* Tabs Picker */
+
 .tabs-picker {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -548,7 +539,7 @@ h1 {
   letter-spacing: 0.05em;
 }
 
-/* Controls */
+
 .controls {
   display: flex;
   justify-content: space-between;
@@ -570,7 +561,7 @@ h1 {
   letter-spacing: 0.05em;
 }
 
-/* Buttons */
+
 button {
   padding: 12px 20px;
   border: none;
@@ -647,9 +638,7 @@ button:not(:disabled):active {
   background: var(--primary-hover);
 }
 
-/* Tabs Picker */
 
-/* Transcription */
 .transcription-wrapper {
   flex: 1;
   position: relative;
@@ -754,7 +743,7 @@ button:not(:disabled):active {
   font-size: 15px;
 }
 
-/* Custom Scrollbar */
+
 .tabs-list::-webkit-scrollbar,
 .transcription-container::-webkit-scrollbar {
   width: 6px;
@@ -776,7 +765,7 @@ button:not(:disabled):active {
   background: var(--text-muted);
 }
 
-/* Loading Animation */
+
 .loading-animation {
   display: flex;
   justify-content: center;

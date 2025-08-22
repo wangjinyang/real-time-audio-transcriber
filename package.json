@@ -1,13 +1,21 @@
 {
-  "name": "ai-audio-transcriber",
+  "name": "real-time-audio-transcriber",
   "version": "1.0.0",
   "description": "AI-powered Chrome extension for real-time audio transcription from browser tabs and microphone using Google Gemini API",
   "main": "service-worker.js",
+  "type": "module",
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "build": "node scripts/build.cjs",
+    "package": "node scripts/package.cjs",
+    "build:dev": "webpack --config webpack.config.cjs --mode=development",
+    "build:prod": "webpack --config webpack.config.cjs --mode=production",
+    "watch": "webpack --config webpack.config.cjs --mode=development --watch",
+    "clean": "rimraf build dist",
+    "release": "npm run clean && npm run build && npm run package",
     "pre-commit": "lint-staged"
   },
   "keywords": [
@@ -20,7 +28,7 @@
     "accessibility",
     "productivity"
   ],
-  "author": "",
+  "author": "Manasa Pasupuleti",
   "license": "MIT",
   "lint-staged": {
     "*.{js,json,md,html,css}": [
@@ -31,9 +39,17 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "babel-loader": "^9.2.1",
+    "copy-webpack-plugin": "^12.0.2",
     "eslint": "^9.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "terser-webpack-plugin": "^5.3.14",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^5.1.4"
   }
 }

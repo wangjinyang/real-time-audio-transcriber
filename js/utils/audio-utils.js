@@ -1,17 +1,10 @@
-/**
- * Audio Utilities Module
- * Functional audio processing utilities for the AI Audio Transcriber Chrome Extension
- */
+
 
 import { UI_CONSTANTS } from '../config/app-config.js';
 
-// ==================== MIME TYPE UTILITIES ====================
 
-/**
- * Get supported MIME type for MediaRecorder
- * @param {MediaStream} stream - Audio stream
- * @returns {string} Supported MIME type
- */
+
+
 export const getSupportedMimeType = stream => {
   const preferredTypes = [
     UI_CONSTANTS.MIME_TYPES.WEBM_OPUS,
@@ -39,22 +32,14 @@ export const getSupportedMimeType = stream => {
   }
 };
 
-/**
- * Check if MIME type is valid
- * @param {string} mimeType - MIME type to validate
- * @returns {boolean} Whether MIME type is valid
- */
+
 export const isValidMimeType = mimeType => {
   return Object.values(UI_CONSTANTS.MIME_TYPES).includes(mimeType);
 };
 
-// ==================== AUDIO CONVERSION UTILITIES ====================
 
-/**
- * Convert blob to base64 string
- * @param {Blob} blob - Audio blob
- * @returns {Promise<string>} Base64 encoded string
- */
+
+
 export const blobToBase64 = blob => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -74,12 +59,7 @@ export const blobToBase64 = blob => {
   });
 };
 
-/**
- * Convert base64 string to blob
- * @param {string} base64Data - Base64 encoded data
- * @param {string} mimeType - MIME type for the blob
- * @returns {Blob} Audio blob
- */
+
 export const base64ToBlob = (base64Data, mimeType) => {
   try {
     const byteCharacters = atob(base64Data);
@@ -97,11 +77,7 @@ export const base64ToBlob = (base64Data, mimeType) => {
   }
 };
 
-/**
- * Validate audio blob
- * @param {Blob} blob - Blob to validate
- * @returns {Promise<boolean>} Whether blob is valid
- */
+
 export const validateAudioBlob = async blob => {
   if (!blob || !(blob instanceof Blob)) {
     throw new Error('Invalid blob object');
@@ -118,16 +94,12 @@ export const validateAudioBlob = async blob => {
   return true;
 };
 
-// ==================== WEB AUDIO API UTILITIES ====================
+
 
 // Store audio contexts in a Map for session management
 let audioContexts = new Map();
 
-/**
- * Create or get audio context for session
- * @param {string} sessionId - Session identifier
- * @returns {AudioContext} Audio context
- */
+
 export const createAudioContext = sessionId => {
   if (audioContexts.has(sessionId)) {
     return audioContexts.get(sessionId);
@@ -140,13 +112,7 @@ export const createAudioContext = sessionId => {
   return audioContext;
 };
 
-/**
- * Setup audio playback for stream
- * @param {string} sessionId - Session identifier
- * @param {MediaStream} stream - Audio stream
- * @param {boolean} enablePlayback - Whether to enable playback
- * @returns {Object|null} Audio setup object or null
- */
+
 export const setupAudioPlayback = (sessionId, stream, enablePlayback = true) => {
   if (!enablePlayback) {
     return null;
@@ -168,11 +134,7 @@ export const setupAudioPlayback = (sessionId, stream, enablePlayback = true) => 
   }
 };
 
-/**
- * Set volume for session
- * @param {string} sessionId - Session identifier
- * @param {number} volume - Volume level (0-1)
- */
+
 export const setVolume = (sessionId, volume) => {
   const audioContext = audioContexts.get(sessionId);
   if (audioContext && audioContext.gainNode) {
@@ -180,11 +142,7 @@ export const setVolume = (sessionId, volume) => {
   }
 };
 
-/**
- * Close audio context for session
- * @param {string} sessionId - Session identifier
- * @returns {Promise<void>}
- */
+
 export const closeAudioContext = async sessionId => {
   const audioContext = audioContexts.get(sessionId);
 
@@ -199,22 +157,15 @@ export const closeAudioContext = async sessionId => {
   audioContexts.delete(sessionId);
 };
 
-/**
- * Close all audio contexts
- * @returns {Promise<void>}
- */
+
 export const closeAllAudioContexts = async () => {
   const sessionIds = Array.from(audioContexts.keys());
   await Promise.all(sessionIds.map(sessionId => closeAudioContext(sessionId)));
 };
 
-// ==================== AUDIO STREAM UTILITIES ====================
 
-/**
- * Capture audio from a specific tab
- * @param {number} tabId - Tab ID to capture
- * @returns {Promise<MediaStream>} Audio stream
- */
+
+
 export const captureTabAudio = async tabId => {
   // Get tab information
   const tabInfo = await chrome.tabs.get(tabId);
@@ -238,10 +189,7 @@ export const captureTabAudio = async tabId => {
   });
 };
 
-/**
- * Capture microphone audio
- * @returns {Promise<MediaStream>} Audio stream
- */
+
 export const captureMicrophoneAudio = async () => {
   try {
     return await navigator.mediaDevices.getUserMedia({
@@ -254,10 +202,7 @@ export const captureMicrophoneAudio = async () => {
   }
 };
 
-/**
- * Stop audio stream
- * @param {MediaStream} stream - Stream to stop
- */
+
 export const stopStream = stream => {
   if (stream && stream.getTracks) {
     stream.getTracks().forEach(track => {
@@ -270,11 +215,7 @@ export const stopStream = stream => {
   }
 };
 
-/**
- * Check if stream is active
- * @param {MediaStream} stream - Stream to check
- * @returns {boolean} Whether stream is active
- */
+
 export const isStreamActive = stream => {
   if (!stream || !stream.getTracks) {
     return false;
@@ -283,32 +224,21 @@ export const isStreamActive = stream => {
   return stream.getTracks().some(track => track.readyState === 'live');
 };
 
-// ==================== UTILITY FUNCTIONS ====================
 
-/**
- * Create audio file URL from blob
- * @param {Blob} blob - Audio blob
- * @returns {string} Object URL
- */
+
+
 export const createAudioURL = blob => {
   return URL.createObjectURL(blob);
 };
 
-/**
- * Revoke audio file URL
- * @param {string} url - Object URL to revoke
- */
+
 export const revokeAudioURL = url => {
   if (url) {
     URL.revokeObjectURL(url);
   }
 };
 
-/**
- * Get audio duration from blob
- * @param {Blob} blob - Audio blob
- * @returns {Promise<number>} Duration in seconds
- */
+
 export const getAudioDuration = blob => {
   return new Promise((resolve, reject) => {
     const audio = new Audio();
@@ -328,11 +258,7 @@ export const getAudioDuration = blob => {
   });
 };
 
-/**
- * Download audio blob as file
- * @param {Blob} blob - Audio blob
- * @param {string} filename - File name
- */
+
 export const downloadAudioFile = (blob, filename = 'audio.webm') => {
   const url = createAudioURL(blob);
   const a = document.createElement('a');
