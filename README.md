@@ -1,3 +1,6 @@
+###Demo:
+https://www.youtube.com/watch?v=S2bAtLlr4tk
+
 # AI Audio Transcriber Chrome Extension
 
 A powerful AI-powered Chrome extension that captures real-time audio from browser tabs and provides instant transcription using multiple AI providers. Perfect for t### Technical Details
