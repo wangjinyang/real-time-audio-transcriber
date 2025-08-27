@@ -1,11 +1,20 @@
 import { API_PROVIDERS, AUDIO_CONFIG } from '../config/app-config.js';
 import { base64ToBlob } from '../utils/audio-utils.js';
+
 export const transcribeWithRetry = async (
   transcriptionFn,
   audioData,
   maxAttempts = AUDIO_CONFIG.MAX_RETRY_ATTEMPTS
 ) => {
   return await retryApiCall(() => transcriptionFn(audioData), maxAttempts);
+};
+
+export const summaryWithRetry = async (
+  summaryFn,
+  textData,
+  maxAttempts = AUDIO_CONFIG.MAX_RETRY_ATTEMPTS
+) => {
+  return await retryApiCall(() => summaryFn(textData), maxAttempts);
 };
 
 // Retry with exponential backoff
@@ -72,6 +81,164 @@ const safeJsonParse = async response => {
     console.warn('Failed to parse JSON response:', error);
     return null;
   }
+};
+
+// Google Gemini API text summarization
+export const summarizeTextWithGemini = async ({ text, apiKey }) => {
+  const config = API_PROVIDERS.gemini;
+  const endpoint = `${config.endpoint}?key=${apiKey}`;
+
+  const payload = {
+    contents: [
+      {
+        parts: [
+          { text: `Summarize the following content:\n${text}\nRespond with only the summary.` },
+        ],
+      },
+    ],
+  };
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorInfo = await safeJsonParse(response);
+    const status = (errorInfo?.error?.status || '').toUpperCase();
+    const message = errorInfo?.error?.message || `HTTP ${response.status}`;
+    const isFatal = isGeminiFatalError(status, response.status);
+    throw { message, isFatal };
+  }
+
+  const data = await response.json();
+  const summary = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+  if (!summary) {
+    throw { message: 'Empty summary response', isFatal: true };
+  }
+
+  return summary;
+};
+
+// OpenAI text summarization
+export const summarizeTextWithOpenAI = async ({ text, apiKey }) => {
+  const config = API_PROVIDERS.openai;
+  const payload = {
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      {
+        role: 'user',
+        content: `Summarize the following content:\n${text}\nRespond with only the summary.`,
+      },
+    ],
+    temperature: 0.5,
+  };
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  console.log('response: ', response);
+
+  if (!response.ok) {
+    const errorInfo = await safeJsonParse(response);
+    const message = errorInfo?.error?.message || `HTTP ${response.status}`;
+    const isFatal = [400, 401, 403].includes(response.status);
+    throw { message, isFatal };
+  }
+
+  const data = await response.json();
+  const summary = data?.choices?.[0]?.message?.content?.trim();
+
+  if (!summary) {
+    throw { message: 'Empty summary response', isFatal: true };
+  }
+
+  return summary;
+};
+
+// Deepgram text summarization (assumed endpoint)
+export const summarizeTextWithDeepgram = async ({ text, apiKey }) => {
+  // Deepgram usually does not support direct text summarization, this is an assumed endpoint
+  const config = API_PROVIDERS.deepgram;
+  const endpoint = config.textSummaryEndpoint || 'https://api.deepgram.com/v1/summarize';
+
+  const payload = { text };
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      Authorization: `Token ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorInfo = await safeJsonParse(response);
+    const message = errorInfo?.err_msg || `HTTP ${response.status}`;
+    const isFatal = [400, 401, 403].includes(response.status);
+    throw { message, isFatal };
+  }
+
+  const data = await response.json();
+  const summary = data?.summary?.trim();
+
+  if (!summary) {
+    throw { message: 'Empty summary response', isFatal: true };
+  }
+
+  return summary;
+};
+
+// Fireworks text summarization
+export const summarizeTextWithFireworks = async ({ text, apiKey }) => {
+  const config = API_PROVIDERS.fireworks;
+  const endpoint = config.chatEndpoint || 'https://api.fireworks.ai/v1/chat/completions';
+
+  const payload = {
+    model: config.model,
+    messages: [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      {
+        role: 'user',
+        content: `Summarize the following content:\n${text}\nRespond with only the summary.`,
+      },
+    ],
+    temperature: 0.5,
+  };
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorInfo = await safeJsonParse(response);
+    const message = errorInfo?.error?.message || `HTTP ${response.status}`;
+    const isFatal = [400, 401, 403].includes(response.status);
+    throw { message, isFatal };
+  }
+
+  const data = await response.json();
+  const summary = data?.choices?.[0]?.message?.content?.trim();
+
+  if (!summary) {
+    throw { message: 'Empty summary response', isFatal: true };
+  }
+
+  return summary;
 };
 
 // Google Gemini API
@@ -239,9 +406,30 @@ export const getTranscriptionFunction = providerId => {
   return transcriptionFn;
 };
 
+export const getSummaryFunction = providerId => {
+  const summarizeFunctions = {
+    gemini: summarizeTextWithGemini,
+    openai: summarizeTextWithOpenAI,
+    deepgram: summarizeTextWithDeepgram,
+    fireworks: summarizeTextWithFireworks,
+  };
+
+  const summarizeFn = summarizeFunctions[providerId];
+  if (!summarizeFn) {
+    throw new Error(`Unsupported summary provider: ${providerId}`);
+  }
+
+  return summarizeFn;
+};
+
 export const transcribeAudio = async (providerId, audioData) => {
   const transcriptionFn = getTranscriptionFunction(providerId);
   return await transcribeWithRetry(transcriptionFn, audioData);
+};
+
+export const summaryText = async (providerId, text) => {
+  const summaryFn = getSummaryFunction(providerId);
+  return await summaryWithRetry(summaryFn, text);
 };
 
 export const getSupportedProviders = () => {
@@ -281,6 +469,7 @@ export const getProviderConfig = providerId => {
 let transcriptionManagerState = {
   currentProvider: null,
   transcriptionFunction: null,
+  summaryFunction: null,
 };
 
 /**
@@ -292,6 +481,7 @@ export const setTranscriptionProvider = providerId => {
 
   transcriptionManagerState.currentProvider = providerId;
   transcriptionManagerState.transcriptionFunction = getTranscriptionFunction(providerId);
+  transcriptionManagerState.summaryFunction = getSummaryFunction(providerId);
 };
 
 /**
@@ -316,12 +506,26 @@ export const transcribeWithCurrentProvider = async audioData => {
 };
 
 /**
+ * Summarize with current provider
+ * @param {string} text - Text to summarize
+ * @returns {Promise<Object>} Summary result
+ */
+export const summaryWithCurrentProvider = async text => {
+  if (!transcriptionManagerState.summaryFunction) {
+    throw new Error('No summary service configured');
+  }
+
+  return await summaryWithRetry(transcriptionManagerState.summaryFunction, text);
+};
+
+/**
  * Reset transcription manager state
  */
 export const resetTranscriptionManager = () => {
   transcriptionManagerState = {
     currentProvider: null,
     transcriptionFunction: null,
+    summaryFunction: null,
   };
 };
 
@@ -363,3 +567,4 @@ export const getTranscriptionStatistics = () => {
     availableProviders: getSupportedProviders(),
   };
 };
+

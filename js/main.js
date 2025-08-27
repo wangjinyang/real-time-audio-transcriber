@@ -1,4 +1,3 @@
-
 import { AUDIO_CONFIG, UI_CONSTANTS } from './config/app-config.js';
 import {
   initializeDOMElements,
@@ -38,6 +37,7 @@ import {
   getSession,
   getAllSessionIds,
   addTranscript,
+  getTranscripts,
   clearTranscripts,
   addToPendingQueue,
   getPendingQueueItems,
@@ -54,36 +54,28 @@ import { getCurrentApiConfiguration } from './modules/storage-manager.js';
 import {
   setTranscriptionProvider,
   transcribeWithCurrentProvider,
-  getCurrentProvider,
+  summaryWithCurrentProvider,
 } from './modules/transcription-service.js';
 import { initializeSettings } from './modules/settings-controller.js';
-
 
 let appState = {
   isInitialized: false,
   audioPlaybackSessions: new Map(),
 };
 
-
-
-
 export const initializeApp = async () => {
   if (appState.isInitialized) return;
 
   try {
-  
     initializeDOMElements();
 
-   
     const elements = getDOMElements();
     initializeStatusManager(elements.statusDisplay);
 
-  
     await initializeSettings({
       setStatus: (message, type) => setStatus(message, type),
     });
 
-    
     bindEventListeners();
 
     // Start tab detection
@@ -101,9 +93,6 @@ export const initializeApp = async () => {
   }
 };
 
-
-
-
 const bindEventListeners = () => {
   const elements = getDOMElements();
 
@@ -118,6 +107,10 @@ const bindEventListeners = () => {
   });
 
   // Export controls
+  elements.summaryButton?.addEventListener('click', () => {
+    handleSummaryTranscription();
+  });
+
   elements.copyButton?.addEventListener('click', () => {
     handleCopyTranscription();
   });
@@ -150,9 +143,6 @@ const bindEventListeners = () => {
   });
 };
 
-
-
-
 const handleToggleRecording = async () => {
   try {
     if (isRecording()) {
@@ -165,7 +155,6 @@ const handleToggleRecording = async () => {
     setStatus(`Recording failed: ${error.message}`, 'error');
   }
 };
-
 
 const startNewRecording = async () => {
   try {
@@ -213,7 +202,6 @@ const startNewRecording = async () => {
   }
 };
 
-
 const startTabSession = async tabId => {
   try {
     const stream = await captureTabAudio(tabId);
@@ -227,7 +215,6 @@ const startTabSession = async tabId => {
   }
 };
 
-
 const startMicrophoneSession = async () => {
   try {
     const stream = await captureMicrophoneAudio();
@@ -237,7 +224,6 @@ const startMicrophoneSession = async () => {
     throw error;
   }
 };
-
 
 const initializeAudioSession = async (sessionId, stream, label, enablePlayback = true) => {
   const mimeType = getSupportedMimeType(stream);
@@ -272,7 +258,6 @@ const initializeAudioSession = async (sessionId, stream, label, enablePlayback =
   // Add session start notification
   addTranscriptionToUI(new Date().toLocaleTimeString(), `${label} started`, '');
 };
-
 
 const startRecordingSegment = sessionId => {
   const session = getSession(sessionId);
@@ -340,7 +325,6 @@ const startRecordingSegment = sessionId => {
   }, AUDIO_CONFIG.DURATION_MS);
 };
 
-
 const processTranscription = async data => {
   try {
     const result = await transcribeWithCurrentProvider({
@@ -376,7 +360,6 @@ const processTranscription = async data => {
   }
 };
 
-
 const stopAllRecording = async () => {
   setRecordingStop();
 
@@ -391,7 +374,6 @@ const stopAllRecording = async () => {
   stopRecordingTimer();
   setStatus(UI_CONSTANTS.STATUS_MESSAGES.IDLE, 'idle');
 };
-
 
 const stopSession = async sessionId => {
   const session = getSession(sessionId);
@@ -433,9 +415,6 @@ const stopSession = async sessionId => {
   addTranscriptionToUI(new Date().toLocaleTimeString(), `${sessionId} stopped`, '');
 };
 
-
-
-
 const handleTabSelectionChange = async event => {
   if (!isRecording()) return;
 
@@ -456,11 +435,9 @@ const handleTabSelectionChange = async event => {
   }
 };
 
-
 const startTabAutoDetection = () => {
   startTabDetection(updateTabsList, AUDIO_CONFIG.TAB_DETECTION_INTERVAL_MS);
 };
-
 
 const updateTabsList = async () => {
   const elements = getDOMElements();
@@ -491,9 +468,6 @@ const updateTabsList = async () => {
   }
 };
 
-
-
-
 const setRecordingUIState = recording => {
   const elements = getDOMElements();
 
@@ -506,11 +480,10 @@ const setRecordingUIState = recording => {
   }
 };
 
-
 const updateButtonVisibility = () => {
   const elements = getDOMElements();
   if (!elements.transcriptionDisplay || !elements.transcriptionControls) return;
-  
+
   // Check if there are any transcription items (not just placeholder or loading)
   const transcriptionItems = elements.transcriptionDisplay.querySelectorAll('.transcription-item');
   const hasRealContent = transcriptionItems.length > 0;
@@ -522,7 +495,6 @@ const updateButtonVisibility = () => {
   }
 };
 
-
 const startRecordingTimer = () => {
   const elements = getDOMElements();
   startTimer(formattedTime => {
@@ -530,13 +502,11 @@ const startRecordingTimer = () => {
   });
 };
 
-
 const stopRecordingTimer = () => {
   const elements = getDOMElements();
   stopTimer();
   setText(elements.timerDisplay, '00:00:00');
 };
-
 
 const addTranscriptionToUI = (timestamp, channelLabel, text) => {
   const elements = getDOMElements();
@@ -564,8 +534,40 @@ const addTranscriptionToUI = (timestamp, channelLabel, text) => {
   updateButtonVisibility();
 };
 
+const handleSummaryTranscription = async () => {
+  const transcripts = getTranscripts();
+  if (transcripts.length === 0) {
+    setStatus('No transcripts available for summary', 'error');
+    return;
+  }
 
+  // Simple summary: concatenate all texts
+  const summaryText = transcripts.map(t => t.text).join(' ');
 
+  try {
+    const result = await summaryWithCurrentProvider({
+      text: summaryText,
+      apiKey: (await getCurrentApiConfiguration()).apiKey,
+    });
+
+    if (result.success) {
+      // Add successful transcription
+      const transcript = {
+        timestamp: new Date().toLocaleTimeString(),
+        text: result.text,
+        sessionId: 'summary',
+        label: 'Summary',
+      };
+
+      addTranscript(transcript);
+      addTranscriptionToUI(new Date().toLocaleTimeString(), transcript.label, transcript.text);
+
+    }
+  } catch (error) {
+    console.error('Summary failed:', error);
+    setStatus(`Summary failed: ${error.message}`, 'error');
+  }
+};
 
 const handleCopyTranscription = () => {
   const elements = getDOMElements();
@@ -574,7 +576,6 @@ const handleCopyTranscription = () => {
     console.warn('Failed to copy to clipboard:', error);
   });
 };
-
 
 const handleDownloadTranscription = () => {
   const elements = getDOMElements();
@@ -589,7 +590,6 @@ const handleDownloadTranscription = () => {
 
   URL.revokeObjectURL(url);
 };
-
 
 const handleClearTranscription = () => {
   const elements = getDOMElements();
@@ -607,9 +607,6 @@ const handleClearTranscription = () => {
   }
 };
 
-
-
-
 const handleNetworkReconnection = async () => {
   if (!hasPendingItems()) return;
 
@@ -625,36 +622,24 @@ const handleNetworkReconnection = async () => {
   }
 };
 
-
-
-
 const handleSettingsReset = () => {
   // Clear application state
   resetState();
 
- 
   stopRecordingTimer();
   updateButtonVisibility();
 };
-
-
-
 
 const cleanup = () => {
   stopTabDetection();
   closeAllAudioContexts();
 
-  
   appState.audioPlaybackSessions.clear();
 };
-
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
   initializeApp();
 });
-
 
 window.AudioTranscriberApp = {
   initializeApp,
@@ -662,3 +647,4 @@ window.AudioTranscriberApp = {
   stopAllRecording,
   cleanup,
 };
+

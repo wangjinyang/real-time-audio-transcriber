@@ -11,6 +11,7 @@ export const initializeDOMElements = () => {
     loadingAnimation: document.getElementById('loadingAnimation'),
 
     // Control Buttons
+    summaryButton: document.getElementById('summaryBtn'),
     copyButton: document.getElementById('copyBtn'),
     downloadTextButton: document.getElementById('downloadTxtBtn'),
     clearButton: document.getElementById('clearBtn'),
