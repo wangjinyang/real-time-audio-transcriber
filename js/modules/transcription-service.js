@@ -1,3 +1,5 @@
+import { RealtimeClient } from './openai-realtime-api.js';
+
 import { API_PROVIDERS, AUDIO_CONFIG } from '../config/app-config.js';
 import { base64ToBlob } from '../utils/audio-utils.js';
 
@@ -296,13 +298,30 @@ const isGeminiFatalError = (status, httpStatus) => {
   return fatalStatuses.includes(status) || fatalHttpCodes.includes(httpStatus);
 };
 
+let realtimeClient = null;
+
 // OpenAI Whisper API
 export const transcribeWithOpenAI = async ({ base64, mimeType, apiKey }) => {
+  // if (!realtimeClient) {
+  //   realtimeClient = new RealtimeClient({
+  //     apiKey: apiKey,
+  //     dangerouslyAllowAPIKeyInBrowser: true,
+  //   });
+  //   await realtimeClient.connect();
+  // }
   const config = API_PROVIDERS.openai;
   const audioBlob = base64ToBlob(base64, mimeType);
   const formData = new FormData();
   formData.append('file', audioBlob, 'audio.webm');
   formData.append('model', config.model);
+  // console.log('realtimeClient: ', realtimeClient, realtimeClient.isConnected);
+  // console.log('base64: ', base64);
+  // console.log('audioBlob: ', audioBlob);
+
+  // if (realtimeClient && realtimeClient.isConnected) {
+  //   realtimeClient.appendInputAudio(await audioBlob.arrayBuffer());
+  //   realtimeClient.createResponse();
+  // }
 
   const response = await fetch(config.endpoint, {
     method: 'POST',

@@ -167,11 +167,11 @@ export const createElement = (tag, className = '', textContent = '') => {
 
 export const createTranscriptionItem = (timestamp, channelLabel, text) => {
   const container = createElement('p', 'transcription-item');
-  const timestampSpan = createElement('span', 'ts', timestamp);
-  const channelSpan = createElement('span', 'chan', channelLabel);
+  const timestampSpan = timestamp && createElement('span', 'ts', timestamp);
+  const channelSpan = channelLabel && createElement('span', 'chan', channelLabel);
 
-  container.appendChild(timestampSpan);
-  container.appendChild(channelSpan);
+  timestampSpan && container.appendChild(timestampSpan);
+  channelSpan && container.appendChild(channelSpan);
   container.appendChild(document.createTextNode(text));
 
   return container;

@@ -1,9 +1,4 @@
-
-
 import { UI_CONSTANTS } from '../config/app-config.js';
-
-
-
 
 export const getSupportedMimeType = stream => {
   const preferredTypes = [
@@ -32,13 +27,9 @@ export const getSupportedMimeType = stream => {
   }
 };
 
-
 export const isValidMimeType = mimeType => {
   return Object.values(UI_CONSTANTS.MIME_TYPES).includes(mimeType);
 };
-
-
-
 
 export const blobToBase64 = blob => {
   return new Promise((resolve, reject) => {
@@ -59,7 +50,6 @@ export const blobToBase64 = blob => {
   });
 };
 
-
 export const base64ToBlob = (base64Data, mimeType) => {
   try {
     const byteCharacters = atob(base64Data);
@@ -77,7 +67,6 @@ export const base64ToBlob = (base64Data, mimeType) => {
   }
 };
 
-
 export const validateAudioBlob = async blob => {
   if (!blob || !(blob instanceof Blob)) {
     throw new Error('Invalid blob object');
@@ -94,11 +83,8 @@ export const validateAudioBlob = async blob => {
   return true;
 };
 
-
-
 // Store audio contexts in a Map for session management
 let audioContexts = new Map();
-
 
 export const createAudioContext = sessionId => {
   if (audioContexts.has(sessionId)) {
@@ -111,7 +97,6 @@ export const createAudioContext = sessionId => {
 
   return audioContext;
 };
-
 
 export const setupAudioPlayback = (sessionId, stream, enablePlayback = true) => {
   if (!enablePlayback) {
@@ -134,14 +119,12 @@ export const setupAudioPlayback = (sessionId, stream, enablePlayback = true) => 
   }
 };
 
-
 export const setVolume = (sessionId, volume) => {
   const audioContext = audioContexts.get(sessionId);
   if (audioContext && audioContext.gainNode) {
     audioContext.gainNode.gain.value = Math.max(0, Math.min(1, volume));
   }
 };
-
 
 export const closeAudioContext = async sessionId => {
   const audioContext = audioContexts.get(sessionId);
@@ -157,14 +140,12 @@ export const closeAudioContext = async sessionId => {
   audioContexts.delete(sessionId);
 };
 
-
 export const closeAllAudioContexts = async () => {
   const sessionIds = Array.from(audioContexts.keys());
   await Promise.all(sessionIds.map(sessionId => closeAudioContext(sessionId)));
 };
 
-
-
+let wavRecorder = null;
 
 export const captureTabAudio = async tabId => {
   // Get tab information
@@ -189,7 +170,6 @@ export const captureTabAudio = async tabId => {
   });
 };
 
-
 export const captureMicrophoneAudio = async () => {
   try {
     return await navigator.mediaDevices.getUserMedia({
@@ -201,7 +181,6 @@ export const captureMicrophoneAudio = async () => {
     throw new Error(`Microphone access denied: ${error.message}`);
   }
 };
-
 
 export const stopStream = stream => {
   if (stream && stream.getTracks) {
@@ -215,7 +194,6 @@ export const stopStream = stream => {
   }
 };
 
-
 export const isStreamActive = stream => {
   if (!stream || !stream.getTracks) {
     return false;
@@ -224,20 +202,15 @@ export const isStreamActive = stream => {
   return stream.getTracks().some(track => track.readyState === 'live');
 };
 
-
-
-
 export const createAudioURL = blob => {
   return URL.createObjectURL(blob);
 };
-
 
 export const revokeAudioURL = url => {
   if (url) {
     URL.revokeObjectURL(url);
   }
 };
-
 
 export const getAudioDuration = blob => {
   return new Promise((resolve, reject) => {
@@ -258,7 +231,6 @@ export const getAudioDuration = blob => {
   });
 };
 
-
 export const downloadAudioFile = (blob, filename = 'audio.webm') => {
   const url = createAudioURL(blob);
   const a = document.createElement('a');
@@ -269,3 +241,4 @@ export const downloadAudioFile = (blob, filename = 'audio.webm') => {
   document.body.removeChild(a);
   revokeAudioURL(url);
 };
+

@@ -1,10 +1,10 @@
 // Audio settings
 export const AUDIO_CONFIG = Object.freeze({
-  STEP_MS: 30000, // 30 seconds between segments
-  DURATION_MS: 33000, // 33 seconds per segment (3s overlap)
-  CHUNK_MS: 3000, // 3 second chunks
+  STEP_MS: 3000, // 30 seconds between segments
+  DURATION_MS: 3300, // 33 seconds per segment (3s overlap)
+  CHUNK_MS: 1000, // 3 second chunks
   MAX_RETRY_ATTEMPTS: 3,
-  TAB_DETECTION_INTERVAL_MS: 3000,
+  TAB_DETECTION_INTERVAL_MS: 1000,
 });
 
 // API provider configs
@@ -22,13 +22,13 @@ export const API_PROVIDERS = Object.freeze({
   }),
   openai: Object.freeze({
     id: 'openai',
-    name: 'OpenAI Whisper',
+    name: 'OpenAI',
     keyName: 'OPENAI_API_KEY',
     inputElementId: 'openaiApiKey',
     saveButtonElementId: 'saveOpenaiKeyBtn',
     configElementId: 'openaiConfig',
     endpoint: 'https://api.openai.com/v1/audio/transcriptions',
-    model: 'whisper-1',
+    model: 'gpt-4o-mini-transcribe',
   }),
   deepgram: Object.freeze({
     id: 'deepgram',

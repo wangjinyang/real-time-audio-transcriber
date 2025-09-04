@@ -27,6 +27,7 @@ import {
   closeAudioContext,
   closeAllAudioContexts,
 } from './utils/audio-utils.js';
+
 import {
   resetState,
   isRecording,
@@ -57,10 +58,13 @@ import {
   summaryWithCurrentProvider,
 } from './modules/transcription-service.js';
 import { initializeSettings } from './modules/settings-controller.js';
+import { WavRecorder } from './utils/wavtools/index.js';
+import { RealtimeClient } from './modules/openai-realtime-api.js';
 
 let appState = {
   isInitialized: false,
   audioPlaybackSessions: new Map(),
+  realtimeClient: null,
 };
 
 export const initializeApp = async () => {
@@ -167,6 +171,13 @@ const startNewRecording = async () => {
       return;
     }
 
+    appState.realtimeClient = new RealtimeClient({
+      apiKey: (await getCurrentApiConfiguration()).apiKey,
+      dangerouslyAllowAPIKeyInBrowser: true,
+    });
+
+    await appState.realtimeClient.connect();
+
     // Set transcription provider
     setTranscriptionProvider(config.provider);
 
@@ -207,7 +218,6 @@ const startTabSession = async tabId => {
     const stream = await captureTabAudio(tabId);
     const tabInfo = await chrome.tabs.get(tabId);
     const label = `Tab: ${tabInfo.title || tabInfo.url}`;
-
     await initializeAudioSession(`tab-${tabId}`, stream, label);
   } catch (error) {
     console.error(`Failed to start tab session ${tabId}:`, error);
@@ -250,79 +260,98 @@ const initializeAudioSession = async (sessionId, stream, label, enablePlayback =
   addSession(sessionId, sessionData);
 
   // Start recording segments
-  startRecordingSegment(sessionId);
-  sessionData.tickTimer = setInterval(() => {
-    startRecordingSegment(sessionId);
-  }, AUDIO_CONFIG.STEP_MS);
+  await startRecordingSegment(sessionId);
+  // sessionData.tickTimer = setInterval(() => {
+  //   startRecordingSegment(sessionId);
+  // }, AUDIO_CONFIG.STEP_MS);
 
   // Add session start notification
   addTranscriptionToUI(new Date().toLocaleTimeString(), `${label} started`, '');
 };
 
-const startRecordingSegment = sessionId => {
+const startRecordingSegment = async sessionId => {
   const session = getSession(sessionId);
   if (!session) return;
 
-  let recorder;
-  try {
-    recorder = new MediaRecorder(session.stream, { mimeType: session.mimeType });
-  } catch (error) {
-    console.warn('Failed to create MediaRecorder with MIME type, using default:', error);
-    recorder = new MediaRecorder(session.stream);
-  }
+  const wavRecorder = new WavRecorder({ sampleRate: 24000 });
 
-  const audioChunks = [];
+  const realtimeClient = appState.realtimeClient;
 
-  // Collect audio data
-  recorder.ondataavailable = event => {
-    if (event.data && event.data.size > 0) {
-      audioChunks.push(event.data);
+  realtimeClient.updateSession({
+    turn_detection: {
+      type: 'server_vad',
+      // threshold: 0.4,
+      // prefix_padding_ms: 400,
+      // silence_duration_ms: 1200,
+    },
+  });
+
+  realtimeClient.on('realtime.event', async ({ time, source, event }) => {
+    const { type } = event;
+    if (source === 'server' && type === 'conversation.item.input_audio_transcription.completed') {
+      console.log('event: ', event);
+      await processTranscriptionEvent({
+        transcript: event.transcript || '',
+        sessionId,
+        label: '',
+        timestamp: time,
+      });
     }
-  };
+  });
 
+  const recorder = {};
   // Process completed segment
   recorder.onstop = async () => {
+    await wavRecorder.end();
     session.activeRecorders.delete(recorder);
 
-    if (audioChunks.length === 0) return;
+    // // Prepare transcription data
+    //   const transcriptionData = {
+    //     sessionId,
+    //     base64: base64Data,
+    //     mimeType: session.mimeType,
+    //     timestamp: new Date().toISOString(),
+    //     label: session.label,
+    //     apiKey: (await getCurrentApiConfiguration()).apiKey,
+    //   };
 
-    try {
-      // Create blob and convert to base64
-      const audioBlob = new Blob(audioChunks, { type: session.mimeType });
-      const base64Data = await blobToBase64(audioBlob);
-
-      // Prepare transcription data
-      const transcriptionData = {
-        sessionId,
-        base64: base64Data,
-        mimeType: session.mimeType,
-        timestamp: new Date().toISOString(),
-        label: session.label,
-        apiKey: (await getCurrentApiConfiguration()).apiKey,
-      };
-
-      // Perform transcription
-      await processTranscription(transcriptionData);
-    } catch (error) {
-      console.error('Failed to process audio segment:', error);
-      setStatus('Transcription processing failed', 'error');
-    }
+    //   // Perform transcription
   };
 
   // Start recording
   session.activeRecorders.add(recorder);
-  recorder.start(AUDIO_CONFIG.CHUNK_MS);
+  await wavRecorder.begin(session.stream);
+
+  await wavRecorder.record(data => realtimeClient.appendInputAudio(data.mono));
 
   // Schedule stop
-  setTimeout(() => {
-    try {
-      if (recorder.state !== 'inactive') {
-        recorder.stop();
-      }
-    } catch (error) {
-      console.warn('Failed to stop recorder:', error);
-    }
-  }, AUDIO_CONFIG.DURATION_MS);
+  // setTimeout(() => {
+  //   try {
+  //     if (recorder.state !== 'inactive') {
+  //       recorder.stop();
+  //     }
+  //   } catch (error) {
+  //     console.warn('Failed to stop recorder:', error);
+  //   }
+  // }, AUDIO_CONFIG.DURATION_MS);
+};
+
+const processTranscriptionEvent = async data => {
+  const transcript = {
+    timestamp: data.timestamp,
+    text: data.transcript,
+    sessionId: data.sessionId,
+    label: data.label,
+  };
+
+  addTranscript(transcript);
+  addTranscriptionToUI(
+    new Date(transcript.timestamp).toLocaleTimeString(),
+    transcript.label,
+    transcript.text
+  );
+
+  setStatus(UI_CONSTANTS.STATUS_MESSAGES.RECORDING, 'recording');
 };
 
 const processTranscription = async data => {
@@ -378,7 +407,9 @@ const stopAllRecording = async () => {
 const stopSession = async sessionId => {
   const session = getSession(sessionId);
   if (!session) return;
-
+  // appState.realtimeClient.updateSession({
+  //   turn_detection: null,
+  // });
   try {
     // Stop recurring segment creation
     if (session.tickTimer) {
@@ -388,16 +419,14 @@ const stopSession = async sessionId => {
     // Stop all active recorders
     for (const recorder of Array.from(session.activeRecorders)) {
       try {
-        if (recorder.state !== 'inactive') {
-          recorder.stop();
-        }
+        recorder.onstop();
       } catch (error) {
         console.warn('Failed to stop recorder:', error);
       }
     }
 
     // Stop audio stream
-    stopStream(session.stream);
+    // stopStream(session.stream);
 
     // Close audio context
     if (session.audioPlayback) {
@@ -561,7 +590,6 @@ const handleSummaryTranscription = async () => {
 
       addTranscript(transcript);
       addTranscriptionToUI(new Date().toLocaleTimeString(), transcript.label, transcript.text);
-
     }
   } catch (error) {
     console.error('Summary failed:', error);

@@ -11,6 +11,7 @@ module.exports = (env, argv) => {
     
     entry: {
       'service-worker': './service-worker.js',
+      'audio_processor_worklet': './js/audio_processor_worklet.js',
       'js/main': './js/main.js'
     },
     
