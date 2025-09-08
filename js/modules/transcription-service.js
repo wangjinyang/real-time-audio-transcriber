@@ -126,17 +126,31 @@ export const summarizeTextWithGemini = async ({ text, apiKey }) => {
 
 // OpenAI text summarization
 export const summarizeTextWithOpenAI = async ({ text, apiKey }) => {
-  const config = API_PROVIDERS.openai;
   const payload = {
     model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: 'You are a helpful assistant.' },
+      {
+        role: 'system',
+        content: `You are a Financial Meeting Assistant. Please summarize the following meeting content with a professional and concise style. Follow these instructions:
+
+1. Summarize the main discussion points in clear bullet points.
+2. For each mentioned stock, you MUST identify and format it EXACTLY as:
+   [Full Company Name (Stock Ticker)]
+   - Do not use any other format such as colons, dashes, or parentheses outside this structure.
+3. If multiple stocks are mentioned, list each separately.
+4. Exclude any irrelevant small talk, personal comments, or off-topic discussions.
+5. Maintain a professional tone suitable for financial reporting or internal meeting notes.
+
+Example output:
+- [Apple Inc. (AAPL)] Quarterly report shows strong performance
+- [Tesla, Inc. (TSLA)] Delivery shortfalls caused negative reaction
+- [Microsoft Corporation (MSFT)] Cloud business outlook remains positive`,
+      },
       {
         role: 'user',
-        content: `Summarize the following content:\n${text}\nRespond with only the summary.`,
+        content: text,
       },
     ],
-    temperature: 0.5,
   };
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -164,6 +178,63 @@ export const summarizeTextWithOpenAI = async ({ text, apiKey }) => {
   }
 
   return summary;
+};
+
+function getStockInfo(text) {
+  const regex = /\[([^(]+)\s\(([^)]+)\)\]/g;
+
+  const results = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const companyName = match[1].trim(); // 公司全称
+    const stockCode = match[2].trim(); // 股票代码
+    results.push({ companyName, stockCode });
+  }
+  return results;
+}
+
+const priceCache = new Map();
+async function getStockPrices(stockInfos) {
+  const toFetch = stockInfos
+    .map(stock => stock.stockCode)
+    .filter(stock => !priceCache.has(stock.stockCode));
+  console.log('toFetch: ', toFetch);
+  if (toFetch.length > 0) {
+    const url = `https://sub3.phatty.io/ai-agent/current-price?symbols=${toFetch.join(',')}`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      console.log('data: ', data);
+      for (const item of data) {
+        priceCache.set(item.symbol, item.currentPrice);
+      }
+    } catch (err) {
+      console.error('Failed to fetch stock prices:', err.message);
+    }
+  }
+  // 返回所有股票价格
+  return stockInfos.reduce((obj, stock) => {
+    obj[stock.stockCode] = priceCache.get(stock.stockCode) || 'N/A';
+    return obj;
+  }, {});
+}
+
+function replaceStockInfoWithPrices(summaryText, stockPrices) {
+  return summaryText.replace(/\[([^(]+)\s\(([^)]+)\)\]/g, (match, companyName, stockCode) => {
+    const price = stockPrices[stockCode] ?? 'N/A';
+    return `[${companyName} (${stockCode}, ${price === 'N/A' ? price : `$${price}`})]`;
+  });
+}
+
+export const summarizePartTextWithOpenAI = async ({ text, apiKey }) => {
+  const summarizeText = await summarizeTextWithOpenAI({ text, apiKey });
+  const stockInfos = getStockInfo(summarizeText);
+  console.log('stockInfos: ', stockInfos);
+  const stockPrices = await getStockPrices(stockInfos);
+  console.log('stockPrices: ', stockPrices);
+  const finalSummary = replaceStockInfoWithPrices(summarizeText, stockPrices);
+  console.log('Final Summary:', finalSummary);
+  return finalSummary;
 };
 
 // Deepgram text summarization (assumed endpoint)

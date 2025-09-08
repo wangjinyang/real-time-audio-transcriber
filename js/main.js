@@ -29,6 +29,7 @@ import {
 } from './utils/audio-utils.js';
 
 import {
+  getState,
   resetState,
   isRecording,
   startRecording as setRecordingState,
@@ -38,7 +39,9 @@ import {
   getSession,
   getAllSessionIds,
   addTranscript,
+  addSummarizedTranscript,
   getTranscripts,
+  getSummarizedTranscripts,
   clearTranscripts,
   addToPendingQueue,
   getPendingQueueItems,
@@ -56,6 +59,7 @@ import {
   setTranscriptionProvider,
   transcribeWithCurrentProvider,
   summaryWithCurrentProvider,
+  summarizePartTextWithOpenAI,
 } from './modules/transcription-service.js';
 import { initializeSettings } from './modules/settings-controller.js';
 import { WavRecorder } from './utils/wavtools/index.js';
@@ -299,11 +303,50 @@ const startRecordingSegment = async sessionId => {
     }
   });
 
+  let summarizedTimerInterval = null;
+
+  const doPartSummary = async () => {
+    const currentState = getState();
+    const transcripts = getTranscripts();
+    let needSummarizeText = '';
+    for (
+      ;
+      currentState.summarizedTranscriptsPosition < transcripts.length;
+      currentState.summarizedTranscriptsPosition++
+    ) {
+      const t = transcripts[currentState.summarizedTranscriptsPosition];
+      needSummarizeText = t.text + '\n';
+    }
+    if (needSummarizeText) {
+      try {
+        const summaryText = await summarizePartTextWithOpenAI({
+          text: needSummarizeText,
+          apiKey: (await getCurrentApiConfiguration()).apiKey,
+        });
+        const summaryData = {
+          timestamp: new Date(),
+          text: summaryText,
+          sessionId,
+          label: 'Summary',
+        };
+        addSummarizedTranscript(summaryData);
+        console.log('summaryData: ', summaryData);
+        addTranscriptionToUI(new Date().toLocaleTimeString(), 'Summary', summaryData.text);
+      } catch (e) {
+        console.error('Part summary failed:', e);
+      }
+    }
+  };
+
   const recorder = {};
   // Process completed segment
   recorder.onstop = async () => {
+    if (summarizedTimerInterval) {
+      clearInterval(summarizedTimerInterval);
+    }
     await wavRecorder.end();
     session.activeRecorders.delete(recorder);
+    await doPartSummary();
 
     // // Prepare transcription data
     //   const transcriptionData = {
@@ -323,6 +366,10 @@ const startRecordingSegment = async sessionId => {
   await wavRecorder.begin(session.stream);
 
   await wavRecorder.record(data => realtimeClient.appendInputAudio(data.mono));
+
+  summarizedTimerInterval = setInterval(() => {
+    doPartSummary();
+  }, 30_000);
 
   // Schedule stop
   // setTimeout(() => {
@@ -564,14 +611,14 @@ const addTranscriptionToUI = (timestamp, channelLabel, text) => {
 };
 
 const handleSummaryTranscription = async () => {
-  const transcripts = getTranscripts();
-  if (transcripts.length === 0) {
+  const summarizedTexts = getSummarizedTranscripts();
+  if (summarizedTexts.length === 0) {
     setStatus('No transcripts available for summary', 'error');
     return;
   }
 
   // Simple summary: concatenate all texts
-  const summaryText = transcripts.map(t => t.text).join(' ');
+  const summaryText = summarizedTexts.map(t => t.text).join('\n');
 
   try {
     const result = await summaryWithCurrentProvider({
