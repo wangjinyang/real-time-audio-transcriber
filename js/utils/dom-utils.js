@@ -8,6 +8,8 @@ export const initializeDOMElements = () => {
     statusDisplay: document.getElementById('status'),
     timerDisplay: document.getElementById('timer'),
     transcriptionDisplay: document.getElementById('transcription-display'),
+    transcriptionDisplayContent: document.getElementById('transcription-display-content'),
+    transcriptionRealTime: document.getElementById('transcription-real-time'),
     loadingAnimation: document.getElementById('loadingAnimation'),
 
     // Control Buttons

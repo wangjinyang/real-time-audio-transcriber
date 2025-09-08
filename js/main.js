@@ -290,16 +290,27 @@ const startRecordingSegment = async sessionId => {
     },
   });
 
+  let realtimeDelta = '';
+
   realtimeClient.on('realtime.event', async ({ time, source, event }) => {
     const { type } = event;
-    if (source === 'server' && type === 'conversation.item.input_audio_transcription.completed') {
-      console.log('event: ', event);
-      await processTranscriptionEvent({
-        transcript: event.transcript || '',
-        sessionId,
-        label: '',
-        timestamp: time,
-      });
+    if (source === 'server') {
+      // console.log('event: ', event);
+      if (type === 'conversation.item.input_audio_transcription.delta') {
+        realtimeDelta += event.delta;
+        // console.log('realtimeDelta: ', realtimeDelta);
+        setRealTimeTranscriptionToUI(realtimeDelta);
+      }
+      if (type === 'conversation.item.input_audio_transcription.completed') {
+        realtimeDelta = '';
+        setRealTimeTranscriptionToUI(realtimeDelta);
+        await processTranscriptionEvent({
+          transcript: event.transcript || '',
+          sessionId,
+          label: '',
+          timestamp: time,
+        });
+      }
     }
   });
 
@@ -584,9 +595,21 @@ const stopRecordingTimer = () => {
   setText(elements.timerDisplay, '00:00:00');
 };
 
+const setRealTimeTranscriptionToUI = text => {
+  const elements = getDOMElements();
+  if (!elements.transcriptionRealTime) return;
+
+  // Create and add transcription item
+  // elements.transcriptionRealTime.innerText = text;
+  requestAnimationFrame(function () {
+    console.log('text: ', text);
+    elements.transcriptionRealTime.textContent = text;
+  });
+};
+
 const addTranscriptionToUI = (timestamp, channelLabel, text) => {
   const elements = getDOMElements();
-  if (!elements.transcriptionDisplay) return;
+  if (!elements.transcriptionDisplay || !elements.transcriptionDisplayContent) return;
 
   // Remove placeholder when first real transcription appears
   if (text) {
@@ -603,7 +626,7 @@ const addTranscriptionToUI = (timestamp, channelLabel, text) => {
 
   // Create and add transcription item
   const item = createTranscriptionItem(timestamp, channelLabel, text);
-  appendChild(elements.transcriptionDisplay, item);
+  appendChild(elements.transcriptionDisplayContent, item);
 
   // Auto-scroll to bottom
   scrollToBottom(elements.transcriptionDisplay);
