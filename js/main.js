@@ -284,14 +284,13 @@ const startRecordingSegment = async sessionId => {
   realtimeClient.updateSession({
     turn_detection: {
       type: 'server_vad',
-      // threshold: 0.4,
-      // prefix_padding_ms: 400,
-      // silence_duration_ms: 1200,
+      silence_duration_ms: 250, // 默认约 500
+      threshold: 0.5, // 嘈杂环境可以调高
+      prefix_padding_ms: 150,
     },
   });
 
   let realtimeDelta = '';
-
   realtimeClient.on('realtime.event', async ({ time, source, event }) => {
     const { type } = event;
     if (source === 'server') {
@@ -299,11 +298,12 @@ const startRecordingSegment = async sessionId => {
       if (type === 'conversation.item.input_audio_transcription.delta') {
         realtimeDelta += event.delta;
         // console.log('realtimeDelta: ', realtimeDelta);
-        setRealTimeTranscriptionToUI(realtimeDelta);
+        throttleSetRealTimeTranscriptionToUI(realtimeDelta);
       }
       if (type === 'conversation.item.input_audio_transcription.completed') {
+        const now = Date.now();
         realtimeDelta = '';
-        setRealTimeTranscriptionToUI(realtimeDelta);
+        throttleSetRealTimeTranscriptionToUI(realtimeDelta);
         await processTranscriptionEvent({
           transcript: event.transcript || '',
           sessionId,
@@ -352,6 +352,8 @@ const startRecordingSegment = async sessionId => {
   const recorder = {};
   // Process completed segment
   recorder.onstop = async () => {
+    realtimeDelta = '';
+    throttleSetRealTimeTranscriptionToUI(realtimeDelta);
     if (summarizedTimerInterval) {
       clearInterval(summarizedTimerInterval);
     }
@@ -376,7 +378,7 @@ const startRecordingSegment = async sessionId => {
   session.activeRecorders.add(recorder);
   await wavRecorder.begin(session.stream);
 
-  await wavRecorder.record(data => realtimeClient.appendInputAudio(data.mono));
+  await wavRecorder.record(data => realtimeClient.appendInputAudio(data.mono), 8192 * 5);
 
   summarizedTimerInterval = setInterval(() => {
     doPartSummary();
@@ -595,6 +597,29 @@ const stopRecordingTimer = () => {
   setText(elements.timerDisplay, '00:00:00');
 };
 
+function throttle(fn, delay) {
+  let last = 0;
+  let timer = null;
+
+  return function (...args) {
+    const now = Date.now();
+    const remaining = delay - (now - last);
+
+    clearTimeout(timer);
+
+    if (remaining <= 0) {
+      last = now;
+      fn.apply(this, args);
+    } else {
+      // 设定最后一次补执行
+      timer = setTimeout(() => {
+        last = Date.now();
+        fn.apply(this, args);
+      }, remaining);
+    }
+  };
+}
+
 const setRealTimeTranscriptionToUI = text => {
   const elements = getDOMElements();
   if (!elements.transcriptionRealTime) return;
@@ -602,10 +627,11 @@ const setRealTimeTranscriptionToUI = text => {
   // Create and add transcription item
   // elements.transcriptionRealTime.innerText = text;
   requestAnimationFrame(function () {
-    console.log('text: ', text);
     elements.transcriptionRealTime.textContent = text;
   });
 };
+
+const throttleSetRealTimeTranscriptionToUI = throttle(setRealTimeTranscriptionToUI, 100);
 
 const addTranscriptionToUI = (timestamp, channelLabel, text) => {
   const elements = getDOMElements();
