@@ -294,14 +294,13 @@ const startRecordingSegment = async sessionId => {
   realtimeClient.on('realtime.event', async ({ time, source, event }) => {
     const { type } = event;
     if (source === 'server') {
-      // console.log('event: ', event);
+      console.log('event: ', event);
       if (type === 'conversation.item.input_audio_transcription.delta') {
         realtimeDelta += event.delta;
         // console.log('realtimeDelta: ', realtimeDelta);
         throttleSetRealTimeTranscriptionToUI(realtimeDelta);
       }
       if (type === 'conversation.item.input_audio_transcription.completed') {
-        const now = Date.now();
         realtimeDelta = '';
         throttleSetRealTimeTranscriptionToUI(realtimeDelta);
         await processTranscriptionEvent({
@@ -378,7 +377,10 @@ const startRecordingSegment = async sessionId => {
   session.activeRecorders.add(recorder);
   await wavRecorder.begin(session.stream);
 
-  await wavRecorder.record(data => realtimeClient.appendInputAudio(data.mono), 8192 * 5);
+  await wavRecorder.record(data => {
+    realtimeClient.appendInputAudio(data.mono);
+    // realtimeClient.createResponse();
+  }, 8192 * 5);
 
   summarizedTimerInterval = setInterval(() => {
     doPartSummary();

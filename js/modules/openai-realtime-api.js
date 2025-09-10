@@ -341,7 +341,8 @@ var RealtimeClient = class extends RealtimeEventHandler {
     this.defaultSessionConfig = {
       input_audio_format: 'pcm16',
       input_audio_transcription: {
-        model: 'gpt-4o-mini-transcribe',
+        // model: 'gpt-4o-mini-transcribe',
+        model: 'gpt-4o-transcribe',
         // "prompt": "",
         // "language": "en"
       },
