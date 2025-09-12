@@ -281,14 +281,14 @@ const startRecordingSegment = async sessionId => {
 
   const realtimeClient = appState.realtimeClient;
 
-  realtimeClient.updateSession({
-    turn_detection: {
-      type: 'server_vad',
-      silence_duration_ms: 250, // 默认约 500
-      threshold: 0.5, // 嘈杂环境可以调高
-      prefix_padding_ms: 150,
-    },
-  });
+  // realtimeClient.updateSession({
+  //   turn_detection: {
+  //     type: 'server_vad',
+  //     silence_duration_ms: 250, // 默认约 500
+  //     threshold: 0.5, // 嘈杂环境可以调高
+  //     prefix_padding_ms: 150,
+  //   },
+  // });
 
   let realtimeDelta = '';
   realtimeClient.on('realtime.event', async ({ time, source, event }) => {
@@ -379,8 +379,8 @@ const startRecordingSegment = async sessionId => {
 
   await wavRecorder.record(data => {
     realtimeClient.appendInputAudio(data.mono);
-    // realtimeClient.createResponse();
-  }, 8192 * 5);
+    realtimeClient.createResponse();
+  }, 8192 * 20);
 
   summarizedTimerInterval = setInterval(() => {
     doPartSummary();
