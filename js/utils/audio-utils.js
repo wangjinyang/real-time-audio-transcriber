@@ -145,7 +145,6 @@ export const closeAllAudioContexts = async () => {
   await Promise.all(sessionIds.map(sessionId => closeAudioContext(sessionId)));
 };
 
-let wavRecorder = null;
 
 export const captureTabAudio = async tabId => {
   // Get tab information

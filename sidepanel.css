@@ -1,42 +1,39 @@
 /* ==================== VARIABLES ==================== */
 :root {
-  
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
 
-  
   --success-color: #059669;
   --success-hover: #047857;
   --danger-color: #dc2626;
   --danger-hover: #b91c1c;
   --warning-color: #d97706;
 
- 
   --surface: #ffffff;
   --background: #f8fafc;
   --border: #e2e8f0;
 
-  
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
 
-  
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-
 
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
 }
 
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  margin: 0;
+}
+
+#root {
   padding: 16px;
-  width: 100%; 
+  width: 100%;
   box-sizing: border-box;
   background: var(--background);
   color: var(--text-primary);
@@ -48,7 +45,6 @@ body {
   font-size: 14px;
 }
 
-
 .header {
   display: flex;
   justify-content: space-between;
@@ -56,9 +52,8 @@ body {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 16px;
-  flex-shrink: 0; 
+  flex-shrink: 0;
 }
-
 
 .header-content {
   display: flex;
@@ -66,13 +61,11 @@ body {
   gap: 4px;
 }
 
-
 .header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 
 .settings-toggle {
   padding: 8px;
@@ -89,12 +82,10 @@ body {
   flex-shrink: 0;
 }
 
-
 .settings-toggle img {
   opacity: 0.7;
   transition: opacity 0.2s ease;
 }
-
 
 .settings-toggle:hover {
   border-color: var(--primary-color);
@@ -105,17 +96,15 @@ body {
   opacity: 1;
 }
 
-
 .settings-toggle.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
 }
 
 .settings-toggle.active img {
-  filter: brightness(0) invert(1); 
+  filter: brightness(0) invert(1);
   opacity: 1;
 }
-
 
 .settings-panel {
   position: fixed;
@@ -127,20 +116,18 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  z-index: 1000; 
-  transform: translateY(-100%); 
+  z-index: 1000;
+  transform: translateY(-100%);
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
   margin: 16px;
 }
 
-
 .settings-panel.open {
   transform: translateY(0);
   opacity: 1;
 }
-
 
 .settings-header {
   display: flex;
@@ -152,14 +139,12 @@ body {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
-
 .settings-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
 }
-
 
 .close-btn {
   background: none;
@@ -181,7 +166,6 @@ body {
   color: var(--text-primary);
 }
 
-
 .settings-section {
   padding: 20px;
   border-bottom: 1px solid var(--border);
@@ -191,14 +175,12 @@ body {
   border-bottom: none;
 }
 
-
 .settings-section h4 {
   margin: 0 0 16px 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
 }
-
 
 .settings-section label {
   display: block;
@@ -209,7 +191,6 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-
 
 .settings-section input {
   width: 100%;
@@ -224,18 +205,16 @@ body {
   box-sizing: border-box;
 }
 
-
 .settings-section input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-
 .settings-section .api-key-row {
   display: flex;
   gap: 12px;
-  align-items: stretch; 
+  align-items: stretch;
 }
 
 .settings-section .api-key-row input {
@@ -243,7 +222,6 @@ body {
   margin-bottom: 0;
   height: auto;
 }
-
 
 .settings-section .api-key-row .secondary {
   padding: 12px 16px;
@@ -253,7 +231,6 @@ body {
   align-items: center;
   justify-content: center;
 }
-
 
 .api-provider-select {
   width: 100%;
@@ -278,11 +255,9 @@ body {
   border-color: var(--primary-color);
 }
 
-
 #apiConfigContainer {
   position: relative;
 }
-
 
 .api-config {
   animation: fadeIn 0.3s ease;
@@ -292,7 +267,6 @@ body {
   margin-bottom: 8px;
   margin-top: 0;
 }
-
 
 .api-description {
   color: var(--text-muted);
@@ -310,7 +284,6 @@ body {
   text-decoration: underline;
 }
 
-
 .settings-section .mic-toggle {
   display: flex;
   align-items: center;
@@ -324,7 +297,6 @@ body {
   margin-bottom: 0;
 }
 
-
 .settings-section .mic-toggle input[type='checkbox'] {
   width: 18px;
   height: 18px;
@@ -332,14 +304,12 @@ body {
   margin: 0;
 }
 
-
 .reset-description {
   color: var(--text-muted);
   font-size: 13px;
   margin: 8px 0 12px 0;
   line-height: 1.4;
 }
-
 
 .reset-btn {
   background: #ef4444;
@@ -375,7 +345,6 @@ h1 {
   color: var(--text-primary);
   letter-spacing: -0.025em;
 }
-
 
 .status-idle {
   color: var(--text-muted);
@@ -422,7 +391,6 @@ h1 {
   font-weight: 600;
   font-size: 13px;
 }
-
 
 .tabs-picker {
   background: var(--surface);
@@ -539,7 +507,6 @@ h1 {
   letter-spacing: 0.05em;
 }
 
-
 .controls {
   display: flex;
   justify-content: space-between;
@@ -560,7 +527,6 @@ h1 {
   color: var(--text-primary);
   letter-spacing: 0.05em;
 }
-
 
 button {
   padding: 12px 20px;
@@ -592,7 +558,7 @@ button:not(:disabled):active {
   transform: translateY(0);
 }
 
-#toggleBtn {
+.toggle-btn {
   background: var(--success-color);
   color: white;
   font-size: 16px;
@@ -601,15 +567,15 @@ button:not(:disabled):active {
   box-shadow: var(--shadow-md);
 }
 
-#toggleBtn:hover {
+.toggle-btn:hover {
   background: var(--success-hover);
 }
 
-#toggleBtn.stop-state {
+.toggle-btn.stop-state {
   background: var(--danger-color);
 }
 
-#toggleBtn.stop-state:hover {
+.toggle-btn.stop-state:hover {
   background: var(--danger-hover);
 }
 
@@ -638,7 +604,6 @@ button:not(:disabled):active {
   background: var(--primary-hover);
 }
 
-
 .transcription-wrapper {
   flex: 1;
   position: relative;
@@ -664,7 +629,8 @@ button:not(:disabled):active {
 .transcription-controls {
   position: absolute;
   top: 16px;
-  right: 8px;
+  right: 50%;
+  transform: translateX(50%);
   display: flex;
   gap: 8px;
   opacity: 0;
@@ -679,7 +645,6 @@ button:not(:disabled):active {
 
 .transcription-wrapper:hover .transcription-controls.has-content {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .transcription-controls button {
@@ -743,7 +708,6 @@ button:not(:disabled):active {
   font-size: 15px;
 }
 
-
 .tabs-list::-webkit-scrollbar,
 .transcription-container::-webkit-scrollbar {
   width: 6px;
@@ -764,7 +728,6 @@ button:not(:disabled):active {
 .transcription-container::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
-
 
 .loading-animation {
   display: flex;
@@ -826,3 +789,4 @@ button:not(:disabled):active {
     transform: translateY(0);
   }
 }
+

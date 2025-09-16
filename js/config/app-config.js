@@ -4,7 +4,7 @@ export const AUDIO_CONFIG = Object.freeze({
   DURATION_MS: 3300, // 33 seconds per segment (3s overlap)
   CHUNK_MS: 1000, // 3 second chunks
   MAX_RETRY_ATTEMPTS: 3,
-  TAB_DETECTION_INTERVAL_MS: 1000,
+  TAB_DETECTION_INTERVAL_MS: 3000,
 });
 
 // API provider configs
@@ -98,7 +98,7 @@ export const UI_CONSTANTS = Object.freeze({
 // Storage keys
 export const STORAGE_KEYS = Object.freeze({
   API_PROVIDER: 'API_PROVIDER',
-  DEFAULT_PROVIDER: 'gemini',
+  DEFAULT_PROVIDER: 'openai',
 });
 
 // Timer config
