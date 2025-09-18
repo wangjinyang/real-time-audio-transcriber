@@ -402,14 +402,17 @@ const stopSession = async sessionId => {
 };
 
 const startTabAutoDetection = () => {
-  startTabDetection(updateTabsList, AUDIO_CONFIG.TAB_DETECTION_INTERVAL_MS);
+  updateTabsList();
+  // startTabDetection(updateTabsList, AUDIO_CONFIG.TAB_DETECTION_INTERVAL_MS);
 };
 
 const updateTabsList = async () => {
   try {
-    const tabs = await chrome.tabs.query({});
-    const audioTabs = tabs.filter(tab => tab.audible || tab.url?.includes('youtube.com'));
-    appStateStore.setAudioTabs(audioTabs);
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!appStateStore.selectTabId && tabs[0]) {
+      appStateStore.setAudioTabs(tabs);
+      appStateStore.setSelectTabId(tabs[0].id);
+    }
   } catch (error) {
     console.error('Failed to update tabs list:', error);
   }
@@ -517,7 +520,7 @@ const handleClearTranscription = () => {
 };
 
 const cleanup = () => {
-  stopTabDetection();
+  // stopTabDetection();
   closeAllAudioContexts();
 
   appState.audioPlaybackSessions.clear();
@@ -688,18 +691,10 @@ export default function App() {
             <div className="placeholder">Play a video to detect audio automatically</div>
           ) : (
             audioTabs.map(tab => (
-              <label onClick={() => setSelectTabId(tab.id)} key={tab.id} className="tab-item">
-                <input
-                  type="radio"
-                  name="tabSelect"
-                  value={tab.id}
-                  id={`tab-${tab.id}`}
-                  checked={tab.id === selectTabId}
-                  readOnly
-                />
+              <div key={tab.id} className="tab-item">
                 {tab.favIconUrl && <img src={tab.favIconUrl} alt="Tab icon" />}
                 <div className="tab-title">{tab.title || tab.url || `Tab ${tab.id}`}</div>
-              </label>
+              </div>
             ))
           )}
         </div>
@@ -749,6 +744,12 @@ export default function App() {
     </>
   );
 }
+
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (tabId === appStateStore.selectTabId) {
+    appStateStore.setAudioTabs([tab]);
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   initializeApp();

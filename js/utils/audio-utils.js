@@ -145,26 +145,60 @@ export const closeAllAudioContexts = async () => {
   await Promise.all(sessionIds.map(sessionId => closeAudioContext(sessionId)));
 };
 
-
 export const captureTabAudio = async tabId => {
   // Get tab information
-  const tabInfo = await chrome.tabs.get(tabId);
+  // const tabInfo = await chrome.tabs.get(tabId);
 
-  // Focus the target tab (Chrome requirement for capture)
-  await chrome.windows.update(tabInfo.windowId, { focused: true });
-  await chrome.tabs.update(tabId, { active: true });
+  // // Focus the target tab (Chrome requirement for capture)
+  // await chrome.windows.update(tabInfo.windowId, { focused: true });
+  // await chrome.tabs.update(tabId, { active: true });
+
+  // chrome.runtime.sendMessage({ action: 'getStreamId' }, response => {
+  //   console.log('response: ', response);
+  //   // if (response.streamId) {
+  //   //   console.log('response: ', response);
+  //   //   // startCapture(response.streamId);
+  //   // } else {
+  //   //   console.error(response.error);
+  //   // }
+  // });
+
+  // chrome.tabCapture.getMediaStreamId({ targetTabId: tabId }, streamId => {
+  //   if (chrome.runtime.lastError) {
+  //     return true;
+  //   } else {
+  //     console.log('streamId: ', streamId);
+  //     return true;
+  //   }
+  // });
 
   // Brief delay for tab activation
-  await new Promise(resolve => setTimeout(resolve, 200));
+  // await new Promise(resolve => setTimeout(resolve, 1000));
 
   // Capture tab audio
   return new Promise((resolve, reject) => {
-    chrome.tabCapture.capture({ audio: true, video: false }, stream => {
-      if (chrome.runtime.lastError || !stream) {
+    chrome.tabCapture.getMediaStreamId({ targetTabId: tabId }, streamId => {
+      if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError?.message || 'Tab capture failed'));
-        return;
+      } else {
+        navigator.mediaDevices
+          .getUserMedia({
+            audio: {
+              mandatory: {
+                chromeMediaSource: 'tab',
+                chromeMediaSourceId: streamId,
+              },
+            },
+            video: false,
+          })
+          .then(stream => {
+            resolve(stream);
+          })
+          .catch(error => {
+            console.error(error);
+            reject(new Error(chrome.runtime.lastError?.message || 'Tab capture failed'));
+          });
       }
-      resolve(stream);
     });
   });
 };

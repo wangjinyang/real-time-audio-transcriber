@@ -3,7 +3,6 @@
   "name": "Real time audio transcriber",
   "version": "1.0.0",
   "description": "AI-powered real-time audio transcription from browser tabs and microphone using Google Gemini API",
-  "author": "Manasa Pasupuleti",
   "permissions": [
     "activeTab",
     "tabs",

@@ -455,7 +455,7 @@ h1 {
 
 .tab-item {
   display: grid;
-  grid-template-columns: 20px 20px 1fr auto;
+  grid-template-columns: 20px auto;
   align-items: center;
   gap: 12px;
   padding: 12px;
