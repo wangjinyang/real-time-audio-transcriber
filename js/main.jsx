@@ -199,6 +199,7 @@ const initializeAudioSession = async (sessionId, stream, label, enablePlayback =
     sessionId,
     label: `${label} started`,
   });
+  throttleScrollToBottom();
 };
 
 const startRecordingSegment = async sessionId => {
@@ -237,7 +238,6 @@ const startRecordingSegment = async sessionId => {
           label: '',
           timestamp: new Date(),
         });
-        throttleScrollToBottom();
       }
     }
   });
@@ -271,6 +271,7 @@ const startRecordingSegment = async sessionId => {
         appStateStore.addCompletedTranscripts(summaryData);
         console.log('summaryData: ', summaryData);
         appStateStore.setSummarizedTranscriptsPosition(summarizedTranscriptsPosition);
+        throttleScrollToBottom();
       } catch (e) {
         console.error('Part summary failed:', e);
       }
@@ -337,6 +338,7 @@ const processTranscriptionEvent = async data => {
 
   appStateStore.addCompletedTranscripts(transcript);
   appStateStore.setStatus(UI_CONSTANTS.STATUS_MESSAGES.RECORDING, 'recording');
+  throttleScrollToBottom();
 };
 
 const stopAllRecording = async () => {
@@ -396,6 +398,7 @@ const stopSession = async sessionId => {
     sessionId,
     label: `${session.label} stopped`,
   });
+  throttleScrollToBottom();
 };
 
 const startTabAutoDetection = () => {
@@ -482,6 +485,7 @@ const handleSummaryTranscription = async () => {
       };
 
       appStateStore.addCompletedTranscripts(transcript);
+      throttleScrollToBottom();
     }
   } catch (error) {
     console.error('Summary failed:', error);
