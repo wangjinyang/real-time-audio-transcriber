@@ -455,9 +455,10 @@ const throttleSetRealTimeTranscriptionToUI = throttle(setRealTimeTranscriptionTo
 
 const throttleScrollToBottom = throttle(function () {
   // Auto-scroll to bottom
-  const ele = document.getElementById('transcription-display');
-  ele && scrollToBottom(ele);
-}, 2000);
+  setTimeout(function () {
+    scrollToBottom(document.getElementById('transcription-display'));
+  });
+}, 1000);
 
 const handleSummaryTranscription = async () => {
   const completedTranscripts = appStateStore.completedTranscripts;
@@ -548,7 +549,7 @@ export default function App() {
     <>
       <div className="header">
         <div className="header-content">
-          <h1>AI Audio Transcriber</h1>
+          <h1>AI Meeting Assistant</h1>
           <div id="status" className={`status-${currentStatus}`}>
             {currentStatusMessage}
           </div>
@@ -558,7 +559,12 @@ export default function App() {
           className="settings-toggle"
           title="Settings"
         >
-          <img src="icons/settings-48.png" alt="Settings" width="16" height="16" />
+          <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24">
+            <path
+              fill="currentColor"
+              d="M19 17H5c-1.103 0-2 .897-2 2s.897 2 2 2h14c1.103 0 2-.897 2-2s-.897-2-2-2m0-7H5c-1.103 0-2 .897-2 2s.897 2 2 2h14c1.103 0 2-.897 2-2s-.897-2-2-2m0-7H5c-1.103 0-2 .897-2 2s.897 2 2 2h14c1.103 0 2-.897 2-2s-.897-2-2-2"
+            ></path>
+          </svg>
         </button>
       </div>
 
@@ -762,11 +768,3 @@ document.addEventListener('DOMContentLoaded', () => {
     </DouraRoot>
   );
 });
-
-window.AudioTranscriberApp = {
-  initializeApp,
-  handleToggleRecording,
-  stopAllRecording,
-  cleanup,
-};
-
