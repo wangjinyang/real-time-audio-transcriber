@@ -235,7 +235,6 @@ async function getStockPrices(stockInfos) {
   const toFetch = stockInfos
     .map(stock => stock.stockCode)
     .filter(stock => !priceCache.has(stock.stockCode));
-  console.log('toFetch: ', toFetch);
   if (toFetch.length > 0) {
     const url = `https://sub3.phatty.io/ai-agent/current-price?symbols=${toFetch.join(',')}`;
     try {

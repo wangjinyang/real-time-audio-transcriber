@@ -1,13 +1,14 @@
 import React from 'react';
 import { useModel } from 'react-doura';
 import { appStateModel, appStateModelName } from '../modules/state-manager';
-import './stocks.css';
-export default function Stocks() {
+import './calendar.css';
+
+export default function Calendar() {
   const { setCurrentView } = useModel(appStateModelName, appStateModel);
   return (
-    <div className="stocks-container">
-      <div className="stocks-header">
-        <h3>Stocks</h3>
+    <div className="calendar-container">
+      <div className="calendar-header">
+        <h3>Calendar</h3>
         <button onClick={() => setCurrentView('main')} className="close-btn">
           ×
         </button>
@@ -15,4 +16,3 @@ export default function Stocks() {
     </div>
   );
 }
-

@@ -37,8 +37,11 @@ import {
 import { WavRecorder } from './utils/wavtools/index.js';
 import { RealtimeClient } from './modules/openai-realtime-api.js';
 
-import Setting from './components/Setting.jsx';
 import Menu from './components/Menu.jsx';
+import Setting from './components/Setting.jsx';
+import Stocks from './components/Stocks.jsx';
+import Calendar from './components/Calendar.jsx';
+import Collections from './components/Collections.jsx';
 
 let appState = {
   isInitialized: false,
@@ -567,6 +570,10 @@ export default function App() {
       </div>
 
       {currentView === 'setting' && <Setting />}
+      {currentView === 'stocks' && <Stocks />}
+      {currentView === 'calendar' && <Calendar />}
+      {currentView === 'collections' && <Collections />}
+      
 
       <div className="tabs-picker">
         <div className="tabs-header">

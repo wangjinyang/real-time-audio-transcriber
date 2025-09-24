@@ -20,6 +20,13 @@ export const appStateModel = defineModel({
     ],
     summarizedTranscriptsPosition: 0,
     summarizedTranscripts: [],
+    stocks: [
+      {
+        symbol: '123',
+        shortName: 'apple',
+        currentPrice: 1,
+      },
+    ],
     realTimeTranscription: '',
     recordingDurationSeconds: 0,
     showMenu: false,
