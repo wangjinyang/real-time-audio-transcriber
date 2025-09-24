@@ -3,11 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { DouraRoot, useModel } from 'react-doura';
 import { appStateModel, appStateModelName } from './modules/state-manager';
 
-import { AUDIO_CONFIG, UI_CONSTANTS } from './config/app-config.js';
+import { UI_CONSTANTS } from './config/app-config.js';
 import { scrollToBottom } from './utils/dom-utils.js';
 import {
   getSupportedMimeType,
-  blobToBase64,
   captureTabAudio,
   captureMicrophoneAudio,
   setupAudioPlayback,
@@ -16,20 +15,12 @@ import {
 } from './utils/audio-utils.js';
 
 import {
-  resetState,
   addSession,
   removeSession,
   getSession,
   getAllSessionIds,
-  addSummarizedTranscript,
-  getSummarizedTranscripts,
-  addToPendingQueue,
-  getPendingQueueItems,
-  hasPendingItems,
   startTimer,
   stopTimer,
-  startTabDetection,
-  stopTabDetection,
   douraStore,
   appStateStore,
 } from './modules/state-manager.js';
@@ -39,13 +30,15 @@ import {
   loadAllApiKeys,
 } from './modules/storage-manager.js';
 import {
-  setTranscriptionProvider,
-  transcribeWithCurrentProvider,
   summaryWithCurrentProvider,
   summarizePartTextWithOpenAI,
+  assistantWithOpenAI,
 } from './modules/transcription-service.js';
 import { WavRecorder } from './utils/wavtools/index.js';
 import { RealtimeClient } from './modules/openai-realtime-api.js';
+
+import Setting from './components/Setting.jsx';
+import Menu from './components/Menu.jsx';
 
 let appState = {
   isInitialized: false,
@@ -210,14 +203,14 @@ const startRecordingSegment = async sessionId => {
 
   const realtimeClient = appState.realtimeClient;
 
-  // realtimeClient.updateSession({
-  //   turn_detection: {
-  //     type: 'server_vad',
-  //     silence_duration_ms: 250, // 默认约 500
-  //     threshold: 0.5, // 嘈杂环境可以调高
-  //     prefix_padding_ms: 150,
-  //   },
-  // });
+  realtimeClient.updateSession({
+    turn_detection: {
+      type: 'server_vad',
+      silence_duration_ms: 250, // 默认约 500
+      threshold: 0.5, // 嘈杂环境可以调高
+      prefix_padding_ms: 150,
+    },
+  });
 
   let realtimeDelta = '';
   realtimeClient.on('realtime.event', async ({ time, source, event }) => {
@@ -309,8 +302,8 @@ const startRecordingSegment = async sessionId => {
   startTimer();
   await wavRecorder.record(data => {
     realtimeClient.appendInputAudio(data.mono);
-    realtimeClient.createResponse();
-  }, 8192 * 20);
+    // realtimeClient.createResponse();
+  }, 8192 * 5);
 
   summarizedTimerInterval = setInterval(() => {
     doPartSummary();
@@ -456,6 +449,9 @@ const throttleSetRealTimeTranscriptionToUI = throttle(setRealTimeTranscriptionTo
 const throttleScrollToBottom = throttle(function () {
   // Auto-scroll to bottom
   setTimeout(function () {
+    if (appStateStore.onfocusContent) {
+      return;
+    }
     scrollToBottom(document.getElementById('transcription-display'));
   });
 }, 1000);
@@ -497,6 +493,13 @@ const handleSummaryTranscription = async () => {
   }
 };
 
+const handleAssistantWithOpenAI = async (index, item) => {
+  const apiKey = (await getCurrentApiConfiguration()).apiKey;
+  const { text } = item;
+  const res = await assistantWithOpenAI({ text: text, apiKey });
+  appStateStore.updateCompletedTranscripts(index, { assistant: res });
+};
+
 const handleDownloadTranscription = () => {
   const text = document.getElementById('transcription-display-content')?.innerText || '';
   const blob = new Blob([text], { type: UI_CONSTANTS.MIME_TYPES.TEXT_PLAIN });
@@ -531,19 +534,17 @@ export default function App() {
   const {
     currentStatus,
     currentStatusMessage,
-    isSettingsPanelOpen,
-    setIsSettingsPanelOpen,
-    allApikeys,
-    currentApiProvider,
-    saveParticularApikeys,
-    setParticularApikeys,
+    showMenu,
+    setShowMenu,
     completedTranscripts,
     realTimeTranscription,
     audioTabs,
     selectTabId,
     setSelectTabId,
+    setOnfocusContent,
     isRecording,
     formateRecordingDurationSeconds,
+    currentView,
   } = useModel(appStateModelName, appStateModel);
   return (
     <>
@@ -554,11 +555,7 @@ export default function App() {
             {currentStatusMessage}
           </div>
         </div>
-        <button
-          onClick={() => setIsSettingsPanelOpen(true)}
-          className="settings-toggle"
-          title="Settings"
-        >
+        <button onClick={() => setShowMenu(!showMenu)} className="menu-toggle" title="menu">
           <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24">
             <path
               fill="currentColor"
@@ -566,123 +563,10 @@ export default function App() {
             ></path>
           </svg>
         </button>
+        {showMenu && <Menu></Menu>}
       </div>
 
-      {isSettingsPanelOpen && (
-        <div className="settings-panel open">
-          <div className="settings-header">
-            <h3>Settings</h3>
-            <button onClick={() => setIsSettingsPanelOpen(false)} className="close-btn">
-              ×
-            </button>
-          </div>
-
-          <div className="settings-section">
-            <h4>Transcription API</h4>
-
-            <label htmlFor="apiProvider">Provider</label>
-            <select disabled className="api-provider-select">
-              {/* <option value="gemini">Google Gemini 2.5 Flash</option> */}
-              <option value="openai">OpenAI Whisper</option>
-              {/* <option value="deepgram">Deepgram</option>
-            <option value="fireworks">Fireworks AI</option> */}
-            </select>
-
-            <div id="apiConfigContainer">
-              {/* <div id="geminiConfig" className="api-config">
-              <label htmlFor="geminiApiKey">Google Gemini API Key</label>
-              <div className="api-key-row">
-                <input type="password" id="geminiApiKey" placeholder="Enter Gemini API key" />
-                <button id="saveGeminiKeyBtn" className="secondary">
-                  Save
-                </button>
-              </div>
-              <p className="api-description">
-                Free tier available with good accuracy. Get your key from
-                <a href="https://aistudio.google.com/app/apikey" target="_blank">
-                  Google AI Studio
-                </a>
-              </p>
-            </div> */}
-
-              <div id="openaiConfig" className="api-config">
-                <label htmlFor="openaiApiKey">OpenAI API Key</label>
-                <div className="api-key-row">
-                  <input
-                    value={allApikeys[currentApiProvider] || ''}
-                    type="password"
-                    onChange={e => setParticularApikeys('openai', e.target.value)}
-                    placeholder="Enter OpenAI API key"
-                  />
-                  <button
-                    onClick={() =>
-                      saveParticularApikeys('openai', allApikeys[currentApiProvider] || '')
-                    }
-                    className="secondary"
-                  >
-                    Save
-                  </button>
-                </div>
-                <p className="api-description">
-                  High accuracy with pay-per-use pricing. Get your key from
-                  <a href="https://platform.openai.com/api-keys" target="_blank">
-                    OpenAI Platform
-                  </a>
-                </p>
-              </div>
-
-              {/* <div id="deepgramConfig" className="api-config" style={{ display: 'none' }}>
-              <label htmlFor="deepgramApiKey">Deepgram API Key</label>
-              <div className="api-key-row">
-                <input type="password" id="deepgramApiKey" placeholder="Enter Deepgram API key" />
-                <button id="saveDeepgramKeyBtn" className="secondary">
-                  Save
-                </button>
-              </div>
-              <p className="api-description">
-                Real-time speech recognition. Get your key from
-                <a href="https://console.deepgram.com/" target="_blank">
-                  Deepgram Console
-                </a>
-              </p>
-            </div>
-
-            <div id="fireworksConfig" className="api-config" style={{ display: 'none' }}>
-              <label htmlFor="fireworksApiKey">Fireworks API Key</label>
-              <div className="api-key-row">
-                <input type="password" id="fireworksApiKey" placeholder="Enter Fireworks API key" />
-                <button id="saveFireworksKeyBtn" className="secondary">
-                  Save
-                </button>
-              </div>
-              <p className="api-description">
-                Fast and cost-effective AI inference. Get your key from
-                <a href="https://fireworks.ai/" target="_blank">
-                  Fireworks AI
-                </a>
-              </p>
-            </div> */}
-            </div>
-          </div>
-
-          {/* <div className="settings-section">
-          <h4>Audio Sources</h4>
-          <label className="mic-toggle">
-            <input type="checkbox" />
-            Include Microphone
-          </label>
-        </div> */}
-
-          <div className="settings-section">
-            <button onClick={resetState} className="reset-btn">
-              Reset
-            </button>
-            <p className="reset-description">
-              Clear all data including API key and transcription history
-            </p>
-          </div>
-        </div>
-      )}
+      {currentView === 'setting' && <Setting />}
 
       <div className="tabs-picker">
         <div className="tabs-header">
@@ -730,17 +614,56 @@ export default function App() {
           <button onClick={handleDownloadTranscription}>Download</button>
           <button onClick={handleClearTranscription}>Clear</button>
         </div>
-        <div id="transcription-display" className="transcription-container">
+        <div
+          id="transcription-display"
+          onMouseEnter={() => setOnfocusContent(true)}
+          onMouseLeave={() => setOnfocusContent(false)}
+          className="transcription-container"
+        >
           <div id="transcription-display-content">
             {completedTranscripts.length === 0 ? (
-              <p className="placeholder">Your transcription will appear here…</p>
+              <div className="placeholder">Your transcription will appear here…</div>
             ) : (
               completedTranscripts.map((item, index) => (
-                <p className="transcription-item" key={index}>
+                <div className="transcription-item" key={index}>
                   {item.timestamp && <span className="ts">{item.timestamp}</span>}
                   {item.label && <span className="chan">{item.label}</span>}
                   {item.text}
-                </p>
+                  {item.assistant && <div className="assistant">{item.assistant}</div>}
+                  <div className="transcription-item-handels">
+                    <button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width={24}
+                        height={24}
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          fill="currentColor"
+                          fillRule="evenodd"
+                          d="M12.404 20.802C14.028 19.97 20 16.568 20 11.5C20 7 16.267 4 12 4c-4.124 0-8 3-8 7.5c0 5.068 5.972 8.47 7.596 9.302a.88.88 0 0 0 .808 0m-.635-6.045L8.97 11.81a1.806 1.806 0 1 1 2.898-2.107l.07.128a.07.07 0 0 0 .124 0l.07-.128c.658-1.212 2.377-1.27 3.114-.104c.443.7.354 1.61-.216 2.21l-2.799 2.947c-.092.097-.139.146-.195.157a.2.2 0 0 1-.072 0c-.056-.011-.103-.06-.195-.157"
+                          clipRule="evenodd"
+                        ></path>
+                      </svg>
+                    </button>
+                    <button onClick={() => handleAssistantWithOpenAI(index, item)}>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width={24}
+                        height={24}
+                        viewBox="0 0 24 24"
+                      >
+                        <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={2}>
+                          <path
+                            strokeLinejoin="round"
+                            d="M14 19c3.771 0 5.657 0 6.828-1.172S22 14.771 22 11s0-5.657-1.172-6.828S17.771 3 14 3h-4C6.229 3 4.343 3 3.172 4.172S2 7.229 2 11s0 5.657 1.172 6.828c.653.654 1.528.943 2.828 1.07"
+                          ></path>
+                          <path d="M10 8.484C10.5 7.494 11 7 12 7c1.246 0 2 .989 2 1.978s-.5 1.033-2 2.022v1m0 2.5v.5m2 4c-1.236 0-2.598.5-3.841 1.145c-1.998 1.037-2.997 1.556-3.489 1.225s-.399-1.355-.212-3.404L6.5 17.5"></path>
+                        </g>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               ))
             )}
           </div>
@@ -768,3 +691,4 @@ document.addEventListener('DOMContentLoaded', () => {
     </DouraRoot>
   );
 });
+

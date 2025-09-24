@@ -1,5 +1,3 @@
-import { RealtimeClient } from './openai-realtime-api.js';
-
 import { API_PROVIDERS, AUDIO_CONFIG } from '../config/app-config.js';
 import { base64ToBlob } from '../utils/audio-utils.js';
 
@@ -178,6 +176,45 @@ Example output:
   }
 
   return summary;
+};
+
+export const assistantWithOpenAI = async ({ text, apiKey }) => {
+  const payload = {
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      {
+        role: 'user',
+        content: text,
+      },
+    ],
+  };
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  console.log('response: ', response);
+
+  if (!response.ok) {
+    const errorInfo = await safeJsonParse(response);
+    const message = errorInfo?.error?.message || `HTTP ${response.status}`;
+    const isFatal = [400, 401, 403].includes(response.status);
+    throw { message, isFatal };
+  }
+
+  const data = await response.json();
+  const res = data?.choices?.[0]?.message?.content?.trim();
+
+  if (!res) {
+    throw { message: 'no message return', isFatal: true };
+  }
+
+  return res;
 };
 
 function getStockInfo(text) {

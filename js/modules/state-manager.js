@@ -9,13 +9,22 @@ export const appStateModel = defineModel({
     audioTabs: [],
     selectTabId: '',
     isRecording: false,
-    completedTranscripts: [],
+    currentView: 'main', // 'main' | 'stocks' | 'collections' | 'calendar' | 'menu' | 'setting'
+    completedTranscripts: [
+      {
+        text: 'Welcome to Real-time Meeting Assistant! Start recording to see live transcriptions here.',
+        timestamp: new Date().toLocaleTimeString(),
+        label: 'System',
+        assistant: 'Hello! I am your assistant. How can I help you today?',
+      },
+    ],
     summarizedTranscriptsPosition: 0,
     summarizedTranscripts: [],
     realTimeTranscription: '',
     recordingDurationSeconds: 0,
-    isSettingsPanelOpen: false,
+    showMenu: false,
     currentApiProvider: 'openai',
+    onfocusContent: false,
     allApikeys: {},
   },
   actions: {
@@ -35,6 +44,16 @@ export const appStateModel = defineModel({
       }
       this.completedTranscripts.push(transcript);
     },
+    updateCompletedTranscripts(index, newData) {
+      if (index < 0 || index >= this.completedTranscripts.length) {
+        console.warn('Invalid index for updating transcript:', index);
+        return;
+      }
+      this.completedTranscripts[index] = {
+        ...this.completedTranscripts[index],
+        ...newData,
+      };
+    },
     clearCompletedTranscripts() {
       this.completedTranscripts = [];
     },
@@ -53,8 +72,8 @@ export const appStateModel = defineModel({
     setRecordingDurationSeconds(v) {
       this.recordingDurationSeconds = v;
     },
-    setIsSettingsPanelOpen(v) {
-      return (this.isSettingsPanelOpen = v);
+    setShowMenu(v) {
+      return (this.showMenu = v);
     },
     setApiProvider(v) {
       this.currentApiProvider = v;
@@ -74,7 +93,7 @@ export const appStateModel = defineModel({
       }
       this.allApikeys[providerId] = apiKey;
       await saveValidatedApiKey(providerId, apiKey);
-      this.isSettingsPanelOpen = false;
+      this.setCurrentView('main');
       this.setStatus(`${config.name} API key saved`, 'processing');
       setTimeout(() => {
         this.setStatus(UI_CONSTANTS.STATUS_MESSAGES.IDLE, 'idle');
@@ -90,13 +109,18 @@ export const appStateModel = defineModel({
     setSelectTabId(tabId) {
       this.selectTabId = tabId;
     },
+    setOnfocusContent(v) {
+      this.onfocusContent = v;
+    },
+    setCurrentView(v) {
+      this.currentView = v;
+    },
     async resetState() {
       this.isRecording = false;
       this.completedTranscripts = [];
       this.summarizedTranscriptsPosition = 0;
       this.summarizedTranscripts = [];
       this.recordingDurationSeconds = 0;
-      this.isSettingsPanelOpen = false;
       this.currentApiProvider = 'openai';
       this.allApikeys = {};
     },
