@@ -99,6 +99,7 @@ export const UI_CONSTANTS = Object.freeze({
 export const STORAGE_KEYS = Object.freeze({
   API_PROVIDER: 'API_PROVIDER',
   DEFAULT_PROVIDER: 'openai',
+  COLLECTIONS: 'collections',
 });
 
 // Timer config

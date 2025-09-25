@@ -187,8 +187,14 @@ export const hasProvider = providerId => {
   return providerId in API_PROVIDERS;
 };
 
+export const setCollections = async collections => {
+  await storageSet({ [STORAGE_KEYS.COLLECTIONS]: collections });
+};
 
-
+export const getCollections = async () => {
+  const result = await storageGet([STORAGE_KEYS.COLLECTIONS]);
+  return result[STORAGE_KEYS.COLLECTIONS] || {};
+}
 
 export const onStorageChanged = callback => {
   const listener = (changes, namespace) => {

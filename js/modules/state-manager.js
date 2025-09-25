@@ -1,6 +1,11 @@
 import { UI_CONSTANTS, TIMER_CONFIG, API_PROVIDERS } from '../config/app-config.js';
 import { defineModel, doura } from 'doura';
-import { clearAllApiKeys, saveValidatedApiKey, saveApiProvider } from './storage-manager.js';
+import {
+  clearAllApiKeys,
+  saveValidatedApiKey,
+  saveApiProvider,
+  setCollections,
+} from './storage-manager.js';
 
 export const appStateModel = defineModel({
   state: {
@@ -12,6 +17,7 @@ export const appStateModel = defineModel({
     currentView: 'main', // 'main' | 'stocks' | 'collections' | 'calendar' | 'menu' | 'setting'
     completedTranscripts: [
       {
+        id: 1,
         text: 'Welcome to Real-time Meeting Assistant! Start recording to see live transcriptions here.',
         timestamp: new Date().toLocaleTimeString(),
         label: 'System',
@@ -27,6 +33,7 @@ export const appStateModel = defineModel({
         currentPrice: 1,
       },
     ],
+    collections: [],
     realTimeTranscription: '',
     recordingDurationSeconds: 0,
     showMenu: false,
@@ -49,13 +56,12 @@ export const appStateModel = defineModel({
       if (timestamp && timestamp.toLocaleTimeString) {
         transcript.timestamp = timestamp.toLocaleTimeString();
       }
+      transcript.id = crypto.randomUUID();
       this.completedTranscripts.push(transcript);
     },
-    updateCompletedTranscripts(index, newData) {
-      if (index < 0 || index >= this.completedTranscripts.length) {
-        console.warn('Invalid index for updating transcript:', index);
-        return;
-      }
+    updateCompletedTranscripts(id, newData) {
+      const index = this.completedTranscripts.findIndex(t => t.id === id);
+      if (index === -1) return;
       this.completedTranscripts[index] = {
         ...this.completedTranscripts[index],
         ...newData,
@@ -72,6 +78,42 @@ export const appStateModel = defineModel({
     },
     clearSummarizedTranscripts() {
       this.summarizedTranscripts = [];
+    },
+    addStock(stock) {
+      if (!stock || !stock.symbol) return;
+      if (this.stocks.some(s => s.symbol === stock.symbol)) return;
+      this.stocks.push(stock);
+    },
+    updateStock(symbol, newData) {
+      const idx = this.stocks.findIndex(s => s.symbol === symbol);
+      if (idx === -1) return;
+      this.stocks[idx] = { ...this.stocks[idx], ...newData };
+    },
+    removeStock(symbol) {
+      this.stocks = this.stocks.filter(s => s.symbol !== symbol);
+    },
+    addCollection(item) {
+      if (!item || !item.id) return;
+      if (this.collectionsIds[item.id]) return;
+      this.collections.push(item);
+      setCollections(this.collections);
+    },
+    updateCollection(id, newData) {
+      const idx = this.collections.findIndex(c => c.id === id);
+      if (idx === -1) return;
+      this.collections[idx] = { ...this.collections[idx], ...newData };
+      setCollections(this.collections);
+    },
+    removeCollection(id) {
+      this.collections = this.collections.filter(c => c.id !== id);
+      setCollections(this.collections);
+    },
+    setCollections(collections) {
+      this.collections = collections;
+    },
+    clearCollections() {
+      this.collections = [];
+      setCollections(this.collections);
     },
     setRealTimeTranscription(v) {
       this.realTimeTranscription = v;
@@ -136,6 +178,13 @@ export const appStateModel = defineModel({
     formateRecordingDurationSeconds() {
       const date = new Date(this.recordingDurationSeconds * 1000);
       return date.toISOString().substring(11, 19); // HH:MM:SS format
+    },
+    collectionsIds() {
+      const ids = {};
+      this.collections.forEach(c => {
+        ids[c.id] = true;
+      });
+      return ids;
     },
   },
 });

@@ -40,5 +40,8 @@
     background: rgba(0, 0, 0, 0.05);
     color: var(--text-primary);
   }
+  .collections-list-wrapper{
+    padding: 16px;
+  }
 }
 

@@ -42,5 +42,149 @@
     background: rgba(0, 0, 0, 0.05);
     color: var(--text-primary);
   }
+  .stocks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+  }
+  .close-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+  }
+  .stocks-form {
+    display: flex;
+    gap: 8px;
+    padding: 16px 0px;
+  }
+  .stocks-input {
+    padding: 6px 10px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-md, 8px);
+    font-size: 15px;
+    outline: none;
+    min-width: 80px;
+    background: #fff;
+    transition: border 0.2s;
+    flex: 1;
+  }
+  .stocks-input:focus {
+    border-color: #2563eb;
+  }
+  .stocks-add-btn {
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    padding: 6px 16px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .stocks-add-btn:hover {
+    background: #1d4ed8;
+  }
+  .stocks-list-wrapper {
+    padding: 20px;
+  }
+  .stocks-list-title {
+    margin-bottom: 12px;
+    font-size: 18px;
+    color: #334155;
+    font-weight: 600;
+  }
+  .stocks-empty {
+    color: #94a3b8;
+    font-style: italic;
+    padding: 16px 0;
+  }
+  .stocks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .stock-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    transition: box-shadow 0.2s;
+  }
+  .stock-fields {
+  }
+  .stock-symbol {
+    font-weight: bold;
+    color: #2563eb;
+    font-size: 18px;
+  }
+  .stock-shortname {
+    color: #64748b;
+    font-size: 14px;
+  }
+  .stock-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stocks-edit-btn,
+  .stocks-delete-btn,
+  .stocks-save-btn,
+  .stocks-cancel-btn {
+    margin-right: 0;
+    padding: 4px 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .stocks-edit-btn {
+    background: #fbbf24;
+    color: #fff;
+  }
+  .stocks-edit-btn:hover {
+    background: #f59e0b;
+  }
+  .stocks-delete-btn {
+    background: #ef4444;
+    color: #fff;
+  }
+  .stocks-delete-btn:hover {
+    background: #dc2626;
+  }
+  .stocks-save-btn {
+    background: #22c55e;
+    color: #fff;
+  }
+  .stocks-save-btn:hover {
+    background: #16a34a;
+  }
+  .stocks-cancel-btn {
+    background: #94a3b8;
+    color: #fff;
+  }
+  .stocks-cancel-btn:hover {
+    background: #64748b;
+  }
 }
 
