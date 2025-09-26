@@ -1,4 +1,5 @@
 import { API_PROVIDERS, AUDIO_CONFIG } from '../config/app-config.js';
+import { appStateStore } from './state-manager.js';
 import { base64ToBlob } from '../utils/audio-utils.js';
 
 export const transcribeWithRetry = async (
@@ -230,45 +231,31 @@ function getStockInfo(text) {
   return results;
 }
 
-const priceCache = new Map();
-async function getStockPrices(stockInfos) {
-  const toFetch = stockInfos
-    .map(stock => stock.stockCode)
-    .filter(stock => !priceCache.has(stock.stockCode));
-  if (toFetch.length > 0) {
-    const url = `https://sub3.phatty.io/ai-agent/current-price?symbols=${toFetch.join(',')}`;
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      console.log('data: ', data);
-      for (const item of data) {
-        priceCache.set(item.symbol, item.currentPrice);
-      }
-    } catch (err) {
-      console.error('Failed to fetch stock prices:', err.message);
-    }
-  }
-  // 返回所有股票价格
-  return stockInfos.reduce((obj, stock) => {
-    obj[stock.stockCode] = priceCache.get(stock.stockCode) || 'N/A';
-    return obj;
-  }, {});
-}
-
-function replaceStockInfoWithPrices(summaryText, stockPrices) {
+function replaceStockInfoWithPrices(summaryText, stockInfosMap) {
   return summaryText.replace(/\[([^(]+)\s\(([^)]+)\)\]/g, (match, companyName, stockCode) => {
-    const price = stockPrices[stockCode] ?? 'N/A';
-    return `[${companyName} (${stockCode}, ${price === 'N/A' ? price : `$${price}`})]`;
+    const stockInfo = stockInfosMap[stockCode];
+    const price = stockInfo?.price ?? 'N/A';
+    return `[${stockInfo?.shortName || ''} (${stockCode}, ${price === 'N/A' ? price : `$${price}`})]`;
   });
 }
 
 export const summarizePartTextWithOpenAI = async ({ text, apiKey }) => {
   const summarizeText = await summarizeTextWithOpenAI({ text, apiKey });
   const stockInfos = getStockInfo(summarizeText);
+  await appStateStore.fetchStockInfos(stockInfos.map(info => info.stockCode));
+  stockInfos.forEach(stock => {
+    const stockInfo = appStateStore.stocksInfos[stock.stockCode];
+    if (stockInfo) {
+      stock.price = stockInfo.currentPrice;
+      stock.shortName = stockInfo.shortName;
+    }
+  });
   console.log('stockInfos: ', stockInfos);
-  const stockPrices = await getStockPrices(stockInfos);
-  console.log('stockPrices: ', stockPrices);
-  const finalSummary = replaceStockInfoWithPrices(summarizeText, stockPrices);
+  const stockInfosMap = {};
+  stockInfos.forEach(stock => {
+    stockInfosMap[stock.stockCode] = stock;
+  });
+  const finalSummary = replaceStockInfoWithPrices(summarizeText, stockInfosMap);
   console.log('Final Summary:', finalSummary);
   return finalSummary;
 };

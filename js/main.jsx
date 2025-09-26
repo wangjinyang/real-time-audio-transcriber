@@ -220,11 +220,16 @@ const startRecordingSegment = async sessionId => {
     },
   });
 
+  // test case
+  // await summarizePartTextWithOpenAI({
+  //   text: 'Apple Inc. Quarterly report shows strong performance',
+  //   apiKey: (await getCurrentApiConfiguration()).apiKey,
+  // });
+
   let realtimeDelta = '';
   realtimeClient.on('realtime.event', async ({ time, source, event }) => {
     const { type } = event;
     if (source === 'server') {
-      console.log('event: ', event);
       if (type === 'conversation.item.input_audio_transcription.delta') {
         realtimeDelta += event.delta;
         // console.log('realtimeDelta: ', realtimeDelta);

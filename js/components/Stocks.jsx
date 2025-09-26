@@ -4,7 +4,7 @@ import { appStateModel, appStateModelName } from '../modules/state-manager';
 import './stocks.css';
 
 export default function Stocks() {
-  const { setCurrentView, stocks, addStock, updateStock, removeStock } = useModel(
+  const { setCurrentView, stocks, addStock, updateStock, removeStock, fetchStockInfos } = useModel(
     appStateModelName,
     appStateModel
   );
@@ -14,9 +14,7 @@ export default function Stocks() {
   const handleAdd = e => {
     e.preventDefault();
     if (!form.symbol.trim()) return;
-    addStock({
-      symbol: form.symbol.trim(),
-    });
+    fetchStockInfos([form.symbol.trim()]);
     setForm({ symbol: '' });
   };
 

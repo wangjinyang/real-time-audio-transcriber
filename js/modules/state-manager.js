@@ -15,24 +15,10 @@ export const appStateModel = defineModel({
     selectTabId: '',
     isRecording: false,
     currentView: 'main', // 'main' | 'stocks' | 'collections' | 'calendar' | 'menu' | 'setting'
-    completedTranscripts: [
-      {
-        id: 1,
-        text: 'Welcome to Real-time Meeting Assistant! Start recording to see live transcriptions here.',
-        timestamp: new Date().toLocaleTimeString(),
-        label: 'System',
-        assistant: 'Hello! I am your assistant. How can I help you today?',
-      },
-    ],
+    completedTranscripts: [],
     summarizedTranscriptsPosition: 0,
     summarizedTranscripts: [],
-    stocks: [
-      {
-        symbol: '123',
-        shortName: 'apple',
-        currentPrice: 1,
-      },
-    ],
+    stocks: [],
     collections: [],
     realTimeTranscription: '',
     recordingDurationSeconds: 0,
@@ -78,6 +64,22 @@ export const appStateModel = defineModel({
     },
     clearSummarizedTranscripts() {
       this.summarizedTranscripts = [];
+    },
+    async fetchStockInfos(stockSymbols) {
+      const needFetchSymbols = stockSymbols.filter(stock => !this.stocksInfos[stock]);
+      if (needFetchSymbols.length > 0) {
+        const url = `https://sub3.phatty.io/ai-agent/current-price?symbols=${needFetchSymbols.join(',')}`;
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          console.log('data: ', data);
+          for (const item of data) {
+            this.stocks.push(item);
+          }
+        } catch (err) {
+          console.error('Failed to fetch stock prices:', err.message);
+        }
+      }
     },
     addStock(stock) {
       if (!stock || !stock.symbol) return;
@@ -185,6 +187,13 @@ export const appStateModel = defineModel({
         ids[c.id] = true;
       });
       return ids;
+    },
+    stocksInfos() {
+      const res = {};
+      this.stocks.forEach(stock => {
+        res[stock.symbol] = stock;
+      });
+      return res;
     },
   },
 });

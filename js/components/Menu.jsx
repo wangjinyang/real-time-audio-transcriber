@@ -7,9 +7,9 @@ export default function Menu() {
   const { setCurrentView } = useModel(appStateModelName, appStateModel);
   return (
     <div className="menu-container">
-      <div className="menu-item" onClick={() => setCurrentView('main')}>
+      {/* <div className="menu-item" onClick={() => setCurrentView('main')}>
         main
-      </div>
+      </div> */}
       <div className="menu-item" onClick={() => setCurrentView('stocks')}>
         stocks
       </div>
