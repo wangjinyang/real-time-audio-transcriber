@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Real time meeting assistant",
+  "name": "AI meeting assistant",
   "version": "1.0.0",
-  "description": "real time meeting assistant",
+  "description": "AI meeting assistant",
   "permissions": [
     "activeTab",
     "tabs",

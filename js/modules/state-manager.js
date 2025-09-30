@@ -1,11 +1,17 @@
-import { UI_CONSTANTS, TIMER_CONFIG, API_PROVIDERS } from '../config/app-config.js';
 import { defineModel, doura } from 'doura';
+import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat.js';
+import utc from 'dayjs/plugin/utc.js';
 import {
   clearAllApiKeys,
   saveValidatedApiKey,
   saveApiProvider,
   setCollections,
 } from './storage-manager.js';
+import { UI_CONSTANTS, TIMER_CONFIG, API_PROVIDERS } from '../config/app-config.js';
+
+dayjs.extend(localizedFormat);
+dayjs.extend(utc);
 
 export const appStateModel = defineModel({
   state: {
@@ -14,12 +20,35 @@ export const appStateModel = defineModel({
     audioTabs: [],
     selectTabId: '',
     isRecording: false,
-    currentView: 'main', // 'main' | 'stocks' | 'collections' | 'calendar' | 'menu' | 'setting'
+    currentView: 'calendar', // 'main' | 'stocks' | 'collections' | 'calendar' | 'menu' | 'setting'
     completedTranscripts: [],
     summarizedTranscriptsPosition: 0,
     summarizedTranscripts: [],
     stocks: [],
     collections: [],
+    calendarEvents: [
+      {
+        title: '产品发布会2', // 事件标题
+        start: 1759305600000, // 开始时间（含时区）
+        end: 1759311000000, // 结束时间（含时区）
+        description: '介绍新品功能，直播链接：https://example.com/live',
+        location: '线上 Zoom 会议', // 可选
+      },
+      {
+        title: '产品发布会1', // 事件标题
+        start: 1759305600000, // 开始时间（含时区）
+        end: 1759311000000, // 结束时间（含时区）
+        description: '介奥术大师大',
+      },
+      {
+        title: '产品发布会', // 事件标题
+        start: 1759987734000, // 开始时间（含时区）
+        end: 1759311000000, // 结束时间（含时区）
+        description:
+          '大时代撒大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所大所',
+        location: '线上 Zoom 会议', // 可选
+      },
+    ],
     realTimeTranscription: '',
     recordingDurationSeconds: 0,
     showMenu: false,
@@ -73,12 +102,62 @@ export const appStateModel = defineModel({
           const res = await fetch(url);
           const data = await res.json();
           console.log('data: ', data);
+          if (data.length === 0) {
+            confirm('No stock data found');
+            return;
+          }
           for (const item of data) {
             this.stocks.push(item);
           }
         } catch (err) {
           console.error('Failed to fetch stock prices:', err.message);
         }
+      }
+    },
+    async fetchEarningsDates() {
+      const symbols = this.stocks.map(s => s.symbol);
+      if (symbols.length > 0) {
+        const fetchEarningsDate = async symbol => {
+          const url = `https://sub3.phatty.io/ai-agent/earnings-date/${symbol}`;
+          try {
+            const res = await fetch(url);
+            const data = await res.json();
+            console.log('data: ', data);
+            const { earningsDate, symbol } = data;
+            this.calendarEvents.push({
+              title: `${symbol} estimated earnings release date`,
+              start: dayjs(earningsDate).valueOf(),
+              description: '',
+            });
+          } catch (err) {
+            console.error('Failed to fetch earnings dates:', err.message);
+          }
+        };
+        let arr = [];
+        for (const symbol of symbols) {
+          const data = await fetchEarningsDate(symbol);
+          arr.push(data);
+        }
+        await Promise.all(arr);
+      }
+    },
+    async fetchCalendarEvents() {
+      const url = `https://sub3.phatty.io/ai-agent/economic-events`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        console.log('data: ', data);
+        const { events = [] } = data;
+        events.forEach(event => {
+          const { name, dateline } = event;
+          this.calendarEvents.push({
+            title: name,
+            start: dateline * 1000,
+            description: '',
+          });
+        });
+      } catch (err) {
+        console.error('Failed to fetch calendar events:', err.message);
       }
     },
     addStock(stock) {
@@ -192,6 +271,25 @@ export const appStateModel = defineModel({
       const res = {};
       this.stocks.forEach(stock => {
         res[stock.symbol] = stock;
+      });
+      return res;
+    },
+    groupCalendarEvents() {
+      const res = [];
+      const grouped = {};
+      this.calendarEvents.forEach(event => {
+        const dateKey = dayjs(event.start).format('YYYY-MM-DD');
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = [];
+        }
+        grouped[dateKey].push(event);
+      });
+      const sortedKeys = Object.keys(grouped).sort(
+        (a, b) => dayjs(a).valueOf() - dayjs(b).valueOf()
+      );
+      sortedKeys.forEach(key => {
+        grouped[key].sort((a, b) => a.start - b.start);
+        res.push({ groupedDate: key, events: grouped[key] });
       });
       return res;
     },
