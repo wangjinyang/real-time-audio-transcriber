@@ -100,6 +100,7 @@ export const STORAGE_KEYS = Object.freeze({
   API_PROVIDER: 'API_PROVIDER',
   DEFAULT_PROVIDER: 'openai',
   COLLECTIONS: 'collections',
+  HANDLE_PERIOD: 'HandlePeriod',
 });
 
 // Timer config

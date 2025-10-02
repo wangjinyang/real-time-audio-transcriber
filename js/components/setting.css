@@ -170,6 +170,12 @@
     text-decoration: underline;
   }
 
+  .api-period-config{
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
   .settings-section .mic-toggle {
     display: flex;
     align-items: center;

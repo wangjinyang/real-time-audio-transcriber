@@ -29,6 +29,7 @@ import {
   getCurrentApiConfiguration,
   loadAllApiKeys,
   getCollections,
+  getHandlePeriod,
 } from './modules/storage-manager.js';
 import {
   summaryWithCurrentProvider,
@@ -61,6 +62,9 @@ export const initializeApp = async () => {
     // Load all API keys
     const apiKeys = await loadAllApiKeys();
     appStateStore.setAllApikeys(apiKeys);
+
+    const handlePeriod = await getHandlePeriod();
+    typeof handlePeriod === 'number' && appStateStore.setHandleTranscriptsPeriod(handlePeriod);
 
     const collections = await getCollections();
     appStateStore.setCollections(getArrayFromObject(collections));
@@ -203,6 +207,47 @@ const initializeAudioSession = async (sessionId, stream, label, enablePlayback =
   throttleScrollToBottom();
 };
 
+const doPartSummary = async (initText = '') => {
+  const transcripts = appStateStore.completedTranscripts;
+  let summarizedTranscriptsPosition = appStateStore.summarizedTranscriptsPosition;
+  let needSummarizeText = initText;
+  const nowTime = new Date().getTime();
+  const startTime = nowTime - parseInt(appStateStore.handleTranscriptsPeriod) * 1000;
+  for (; summarizedTranscriptsPosition < transcripts.length; summarizedTranscriptsPosition++) {
+    const { isPartSummary, text, time } = transcripts[summarizedTranscriptsPosition];
+    if (isPartSummary) {
+      continue;
+    }
+    if (time >= nowTime) {
+      break;
+    }
+    if (time >= startTime) {
+      needSummarizeText = text + '\n';
+    }
+  }
+  if (needSummarizeText) {
+    try {
+      const summaryText = await summarizePartTextWithOpenAI({
+        text: needSummarizeText,
+        apiKey: (await getCurrentApiConfiguration()).apiKey,
+      });
+      const summaryData = {
+        timestamp: new Date(),
+        text: summaryText,
+        sessionId: '',
+        label: 'Summary',
+        isPartSummary: true,
+      };
+      appStateStore.addCompletedTranscripts(summaryData);
+      console.log('summaryData: ', summaryData);
+      appStateStore.setSummarizedTranscriptsPosition(summarizedTranscriptsPosition);
+      throttleScrollToBottom();
+    } catch (e) {
+      console.error('Part summary failed:', e);
+    }
+  }
+};
+
 const startRecordingSegment = async sessionId => {
   const session = getSession(sessionId);
   if (!session) return;
@@ -214,9 +259,9 @@ const startRecordingSegment = async sessionId => {
   realtimeClient.updateSession({
     turn_detection: {
       type: 'server_vad',
-      silence_duration_ms: 250, // 默认约 500
+      silence_duration_ms: 100, // 默认约 500
       threshold: 0.5, // 嘈杂环境可以调高
-      prefix_padding_ms: 150,
+      prefix_padding_ms: 50,
     },
   });
 
@@ -250,40 +295,6 @@ const startRecordingSegment = async sessionId => {
 
   let summarizedTimerInterval = null;
 
-  const doPartSummary = async () => {
-    const transcripts = appStateStore.completedTranscripts;
-    let summarizedTranscriptsPosition = appStateStore.summarizedTranscriptsPosition;
-    let needSummarizeText = '';
-    for (; summarizedTranscriptsPosition < transcripts.length; summarizedTranscriptsPosition++) {
-      const t = transcripts[summarizedTranscriptsPosition];
-      if (t.isPartSummary) {
-        continue;
-      }
-      needSummarizeText = t.text + '\n';
-    }
-    if (needSummarizeText) {
-      try {
-        const summaryText = await summarizePartTextWithOpenAI({
-          text: needSummarizeText,
-          apiKey: (await getCurrentApiConfiguration()).apiKey,
-        });
-        const summaryData = {
-          timestamp: new Date(),
-          text: summaryText,
-          sessionId,
-          label: 'Summary',
-          isPartSummary: true,
-        };
-        appStateStore.addCompletedTranscripts(summaryData);
-        console.log('summaryData: ', summaryData);
-        appStateStore.setSummarizedTranscriptsPosition(summarizedTranscriptsPosition);
-        throttleScrollToBottom();
-      } catch (e) {
-        console.error('Part summary failed:', e);
-      }
-    }
-  };
-
   const recorder = {};
   // Process completed segment
   recorder.onstop = async () => {
@@ -294,7 +305,7 @@ const startRecordingSegment = async sessionId => {
     }
     await wavRecorder.end();
     session.activeRecorders.delete(recorder);
-    await doPartSummary();
+    // await doPartSummary();
 
     // // Prepare transcription data
     //   const transcriptionData = {
@@ -318,9 +329,19 @@ const startRecordingSegment = async sessionId => {
     // realtimeClient.createResponse();
   }, 8192 * 5);
 
-  summarizedTimerInterval = setInterval(() => {
-    doPartSummary();
-  }, 30_000);
+  setTimeout(() => {
+    appStateStore.addCompletedTranscripts({
+      timestamp: new Date(),
+      text: `2025年10月10日下午2点到4点，产品部召开新品发布会，线上会议（Zoom），链接 https://example.com/live。  
+讨论了苹果公司 AAPL 的新品需求预测，以及微软 MSFT 的 AI 投资。`,
+      sessionId: '',
+      label: 'Part summary',
+    });
+  }, 2_000);
+
+  // summarizedTimerInterval = setInterval(() => {
+  //   doPartSummary();
+  // }, 30_000);
 
   // Schedule stop
   // setTimeout(() => {
@@ -471,35 +492,36 @@ const throttleScrollToBottom = throttle(function () {
 
 const handleSummaryTranscription = async () => {
   const completedTranscripts = appStateStore.completedTranscripts;
+  const isRecording = appStateStore.isRecording;
+  if (isRecording) {
+    doPartSummary(``);
+    return;
+  }
   if (completedTranscripts.length === 0) {
     appStateStore.setStatus('No transcripts available for summary', 'error');
     return;
   }
 
   // Simple summary: concatenate all texts
-  const summaryText = completedTranscripts
+  const needSummarizeText = completedTranscripts
     .filter(t => !t.isPartSummary)
     .map(t => t.text)
     .join('\n');
 
   try {
-    const result = await summaryWithCurrentProvider({
-      text: summaryText,
+    const summaryText = await summarizePartTextWithOpenAI({
+      text: needSummarizeText,
       apiKey: (await getCurrentApiConfiguration()).apiKey,
     });
-
-    if (result.success) {
-      // Add successful transcription
-      const transcript = {
-        timestamp: new Date(),
-        text: result.text,
-        sessionId: 'summary',
-        label: 'Summary',
-      };
-
-      appStateStore.addCompletedTranscripts(transcript);
-      throttleScrollToBottom();
-    }
+    const summaryData = {
+      timestamp: new Date(),
+      text: summaryText,
+      sessionId: '',
+      label: 'Summary',
+      isPartSummary: true,
+    };
+    appStateStore.addCompletedTranscripts(summaryData);
+    throttleScrollToBottom();
   } catch (error) {
     console.error('Summary failed:', error);
     appStateStore.setStatus(`Summary failed: ${error.message}`, 'error');
@@ -561,6 +583,7 @@ export default function App() {
     addCollection,
     removeCollection,
     collectionsIds,
+    handleTranscriptsPeriod,
   } = useModel(appStateModelName, appStateModel);
   return (
     <>
@@ -589,7 +612,7 @@ export default function App() {
 
       <div className="tabs-picker">
         <div className="tabs-header">
-          <span>Audible Tabs</span>
+          <span>Tab Info</span>
           <div className="auto-detect-indicator">
             <span className="dot"></span>
             Auto-detecting
@@ -629,7 +652,9 @@ export default function App() {
         <div
           className={`transcription-controls ${completedTranscripts.length > 0 ? 'has-content' : ''}`}
         >
-          <button onClick={handleSummaryTranscription}>Summary</button>
+          <button onClick={handleSummaryTranscription}>
+            Summary {isRecording ? `${handleTranscriptsPeriod}s` : 'All'}
+          </button>
           <button onClick={handleDownloadTranscription}>Download</button>
           <button onClick={handleClearTranscription}>Clear</button>
         </div>

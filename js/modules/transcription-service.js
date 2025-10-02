@@ -126,24 +126,42 @@ export const summarizeTextWithGemini = async ({ text, apiKey }) => {
 // OpenAI text summarization
 export const summarizeTextWithOpenAI = async ({ text, apiKey }) => {
   const payload = {
-    model: 'gpt-4o-mini',
+    model: 'gpt-4.1',
     messages: [
       {
         role: 'system',
-        content: `You are a Financial Meeting Assistant. Please summarize the following meeting content with a professional and concise style. Follow these instructions:
+        content: `You are an assistant that processes financial meeting content.
 
-1. Summarize the main discussion points in clear bullet points.
-2. For each mentioned stock, you MUST identify and format it EXACTLY as:
-   [Full Company Name (Stock Ticker)]
-   - Do not use any other format such as colons, dashes, or parentheses outside this structure.
-3. If multiple stocks are mentioned, list each separately.
-4. Exclude any irrelevant small talk, personal comments, or off-topic discussions.
-5. Maintain a professional tone suitable for financial reporting or internal meeting notes.
+Task 1: Extract meeting information
+- Detect all meetings from the text (can be one or multiple).
+- Output them in a JSON array with this schema:
+[
+  {
+    "title": string,
+    "start": string,
+    "end": string|null,
+    "description": string|null,
+    "location": string|null
+  }
+]
+- If a field is missing, use null.
+- Convert start/end times into human-readable string format with second-level precision ("YYYY-MM-DD HH:mm:ss").
+- If the input time includes a timezone, respect it.
+- If the timezone is missing, default to America/New_York time (ET).
 
-Example output:
-- [Apple Inc. (AAPL)] Quarterly report shows strong performance
-- [Tesla, Inc. (TSLA)] Delivery shortfalls caused negative reaction
-- [Microsoft Corporation (MSFT)] Cloud business outlook remains positive`,
+Task 2: Summarize the main discussion points as financial meeting notes
+- Use clear bullet points.
+- For each mentioned stock, identify and format it EXACTLY as:
+  [Full Company Name (Ticker)]
+- If multiple stocks are mentioned, list them separately.
+- Exclude irrelevant small talk or personal comments.
+- Maintain a professional tone suitable for financial reporting.
+
+Final Output Format:
+===MEETING_INFO===
+<JSON array here>
+===SUMMARY===
+<bullet point summary here>`,
       },
       {
         role: 'user',
@@ -170,18 +188,33 @@ Example output:
   }
 
   const data = await response.json();
-  const summary = data?.choices?.[0]?.message?.content?.trim();
+  const content = data.choices[0].message.content?.trim();
 
-  if (!summary) {
-    throw { message: 'Empty summary response', isFatal: true };
+  const meetingMatch = content.match(/===MEETING_INFO===\s*([\s\S]*?)\s*===SUMMARY===/);
+  const summaryMatch = content.match(/===SUMMARY===\s*([\s\S]*)/);
+
+  let meetings = [];
+  let summary = '';
+
+  if (meetingMatch) {
+    try {
+      meetings = JSON.parse(meetingMatch[1].trim());
+    } catch (err) {
+      console.error('JSON parse error:', err);
+      meetings = [];
+    }
   }
 
-  return summary;
+  if (summaryMatch) {
+    summary = summaryMatch[1].trim();
+  }
+
+  return { meetings, summary };
 };
 
 export const assistantWithOpenAI = async ({ text, apiKey }) => {
   const payload = {
-    model: 'gpt-4o-mini',
+    model: 'gpt-4.1',
     messages: [
       { role: 'system', content: 'You are a helpful assistant.' },
       {
@@ -240,7 +273,13 @@ function replaceStockInfoWithPrices(summaryText, stockInfosMap) {
 }
 
 export const summarizePartTextWithOpenAI = async ({ text, apiKey }) => {
-  const summarizeText = await summarizeTextWithOpenAI({ text, apiKey });
+  const { summary: summarizeText = '', meetings = [] } = await summarizeTextWithOpenAI({
+    text,
+    apiKey,
+  });
+  meetings.forEach(meeting => {
+    appStateStore.addCalendarEvent(meeting);
+  });
   const stockInfos = getStockInfo(summarizeText);
   await appStateStore.fetchStockInfos(stockInfos.map(info => info.stockCode));
   stockInfos.forEach(stock => {
@@ -624,11 +663,12 @@ export const transcribeWithCurrentProvider = async audioData => {
  * @returns {Promise<Object>} Summary result
  */
 export const summaryWithCurrentProvider = async text => {
-  if (!transcriptionManagerState.summaryFunction) {
+  const summaryFunction = getSummaryFunction(appStateStore.currentApiProvider);
+  if (!summaryFunction) {
     throw new Error('No summary service configured');
   }
 
-  return await summaryWithRetry(transcriptionManagerState.summaryFunction, text);
+  return await summaryWithRetry(summaryFunction, text);
 };
 
 /**

@@ -10,6 +10,8 @@ export default function Setting() {
     currentApiProvider,
     saveParticularApikeys,
     setParticularApikeys,
+    handleTranscriptsPeriod,
+    setHandleTranscriptsPeriod,
   } = useModel(appStateModelName, appStateModel);
   return (
     <div className="settings-container">
@@ -48,7 +50,7 @@ export default function Setting() {
                       </p>
                     </div> */}
 
-          <div id="openaiConfig" className="api-config">
+          <div className="api-config">
             <label htmlFor="openaiApiKey">OpenAI API Key</label>
             <div className="api-key-row">
               <input
@@ -72,6 +74,19 @@ export default function Setting() {
                 OpenAI Platform
               </a>
             </p>
+          </div>
+          <div className="api-period-config">
+            <label htmlFor="handleTranscriptsPeriod">
+              Specify the duration for the summary section in seconds
+            </label>
+            <input
+              type="number"
+              min="10"
+              step="10"
+              value={handleTranscriptsPeriod}
+              onChange={e => setHandleTranscriptsPeriod(parseInt(e.target.value))}
+              placeholder="Enter period in seconds"
+            />
           </div>
 
           {/* <div id="deepgramConfig" className="api-config" style={{ display: 'none' }}>
